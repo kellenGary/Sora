@@ -11,13 +11,20 @@ import androidx.navigation.NavController
 import com.example.sora.auth.AuthViewModel
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import com.example.sora.auth.AuthRepository
+import com.example.sora.auth.AuthUiState
 import com.example.sora.auth.IAuthViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 @Composable
 fun MainScreen(
     navController: NavController,
     authViewModel: IAuthViewModel = viewModel<AuthViewModel>()
 ) {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -29,6 +36,22 @@ fun MainScreen(
             text = "Welcome to Sora!",
             style = MaterialTheme.typography.headlineMedium
         )
+
+        Button(
+            onClick = {
+                // Get Username
+                // TODO: This should be a saved username not the email
+                val currentUser = AuthRepository().getCurrentUser()
+                val userEmail = currentUser?.identities?.firstOrNull()?.identityData?.jsonObject?.get("email")?.jsonPrimitive?.content
+                val username = userEmail?.substringBefore('@') ?: "user"
+
+
+
+                navController.navigate("profile/$username")
+            }
+        ) {
+             Text("Go to Profile")
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -50,11 +73,12 @@ fun MainScreen(
 @Composable
 fun PreviewMainScreen() {
     val fakeNavController = rememberNavController()
-
     // Create a fake ViewModel for preview purposes
     val fakeAuthViewModel = object : IAuthViewModel {
-        override fun signOut() {
-        }
+        override val uiState: StateFlow<AuthUiState> = MutableStateFlow(AuthUiState())
+        override fun signOut() {}
+        override fun setErrorMessage(message: String) {}
+        override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {}
     }
 
     MainScreen(navController = fakeNavController, authViewModel = fakeAuthViewModel)

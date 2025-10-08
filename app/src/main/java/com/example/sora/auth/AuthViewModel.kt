@@ -27,7 +27,7 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
     private val authRepository = AuthRepository()
 
     private val _uiState = MutableStateFlow(AuthUiState())
-    val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+    override val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     fun signUp(email: String, password: String) {
         viewModelScope.launch {
@@ -84,11 +84,11 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
         _uiState.value = _uiState.value.copy(errorMessage = null, successMessage = null)
     }
 
-    fun setErrorMessage(message: String) {
+    override fun setErrorMessage(message: String) {
         _uiState.value = _uiState.value.copy(errorMessage = message)
     }
 
-    fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {
+    override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {
         Log.d("AuthViewModel", "==================== SPOTIFY AUTH RESULT ====================")
         Log.d("AuthViewModel", "Received in AuthViewModel:")
         Log.d("AuthViewModel", "  Access Token Length: ${accessToken.length}")

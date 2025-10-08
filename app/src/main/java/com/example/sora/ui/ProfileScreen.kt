@@ -1,10 +1,19 @@
 package com.example.sora.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,38 +25,61 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.sora.R // Make sure to import your R file
 
+// TODO: Edit this when we are pulling real song data from spotify, may need to change structure
+data class Song(
+    val id: String,
+    val title: String,
+    val artist: String,
+    val albumArtUrl: String?
+)
+
+/**
+ * Main composable screen that houses the entire profile page.
+ */
 @Composable
 fun ProfileScreen(
     username: String,
     pfpUrl: String?,
     uniqueSongs: Int,
+    listeningHistory: List<Song>,
+    likedSongs: List<Song>,
 ) {
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(18.dp, 15.dp)
     ) {
         // Top container for profile info
-        ProfileHeader(
-            username = username,
-            pfpUrl = pfpUrl,
-            subHeadingText = "$uniqueSongs unique songs played"
-        )
-
-        // The rest of your profile content can go here
-        Spacer(modifier = Modifier.weight(1f)) // Pushes content below it down
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "This is the Profile Screen")
+        item {
+            ProfileHeader(
+                username = username,
+                pfpUrl = pfpUrl,
+                subHeadingText = "$uniqueSongs unique songs played"
+            )
         }
-        Spacer(modifier = Modifier.weight(1f)) // Pushes content above it up
+
+        // Listening History Section
+        item {
+            ExpandableSongSection(
+                title = "Listening History",
+                songs = listeningHistory
+            )
+        }
+
+        // Likes Section
+        item {
+            ExpandableSongSection(
+                title = "Likes",
+                songs = likedSongs
+            )
+        }
     }
 }
 
+/**
+ * Header containing the pfp, username, unique songs and followers
+ */
 @Composable
 fun ProfileHeader(
     username: String,
@@ -63,13 +95,13 @@ fun ProfileHeader(
         AsyncImage(
             model = pfpUrl,
             contentDescription = "Profile Picture",
-            placeholder = ColorPainter(Color.Gray),
-            error = ColorPainter(Color.Gray),
+            placeholder = ColorPainter(Color(0xFFD9D9D9)),
+            error = ColorPainter(Color(0xFFD9D9D9)),
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .background(Color.Gray)
+                .background(Color.LightGray)
         )
 
         // Spacer between image and text
@@ -82,8 +114,8 @@ fun ProfileHeader(
             // Username
             Text(
                 text = username,
-                fontWeight = FontWeight.W700, // Equivalent to Bold (700 weight)
-                fontSize = 16.sp // Set font size to 16.sp
+                fontWeight = FontWeight.W700,
+                fontSize = 16.sp
             )
 
             // Spacer
@@ -92,21 +124,159 @@ fun ProfileHeader(
             // Subheading text
             Text(
                 text = subHeadingText,
-                fontWeight = FontWeight.W300, // Equivalent to Light (300 weight)
-                fontSize = 12.sp, // Set font size to 12.sp
+                fontWeight = FontWeight.W300,
+                fontSize = 12.sp,
                 color = Color.Gray
             )
         }
     }
 }
 
+/**
+ * A reusable composable section that displays a title and a list of songs,
+ * with a "See more" / "See less" button to expand or collapse the list.
+ */
+@Composable
+fun ExpandableSongSection(
+    title: String,
+    songs: List<Song>,
+    modifier: Modifier = Modifier
+) {
+    var isExpanded by remember { mutableStateOf(false) }
 
+    // The list of songs to actually display, based on the expanded state
+    val displayedSongs = if (isExpanded) songs else songs.take(2)
+
+    Column(modifier = modifier) {
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = Color.LightGray
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+
+        // Section Title and "See more" button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.W500,
+            )
+            if (songs.size > 2) {
+                Text(
+                    text = if (isExpanded) "See less" else "See more",
+                    color = Color.Blue,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { isExpanded = !isExpanded }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(5.dp))
+
+        // Column to hold the song cards
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            displayedSongs.forEach { song ->
+                SongCard(
+                    song = song,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp)) // Add space after the section
+    }
+}
+
+
+/**
+ * A reusable composable representing a single song card.
+ */
+@Composable
+fun SongCard(
+    song: Song,
+    modifier: Modifier = Modifier
+) {
+    // Card container
+    Box(
+        modifier = modifier
+            .height(120.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFE7E5DE))
+    ) {
+        // Row to hold the album art and song details
+        Row(
+            modifier = Modifier
+                .padding(10.dp, 12.dp)
+        ) {
+            // Album Art
+            AsyncImage(
+                model = song.albumArtUrl,
+                contentDescription = "Profile Picture",
+                placeholder = ColorPainter(Color(0xFFD9D9D9)),
+                error = ColorPainter(Color(0xFFD9D9D9)),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .border(
+                        width = 1.dp,
+                        color = Color.Black,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            // Song Details
+            Column {
+                Text(
+                    text = song.title,
+                    fontWeight = FontWeight.W500,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = song.artist,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.W300,
+                    color = Color.Black
+                )
+            }
+        }
+
+    }
+}
+
+/**
+ * Preview for iterative development. To use in android studio go into "split" or "design"
+ * mode (top right of the editor also, alt + shift + right).
+ */
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
+    val fakeHistory = listOf(
+        Song("1", "Bohemian Rhapsody", "Queen", null),
+        Song("2", "Stairway to Heaven", "Led Zeppelin", null),
+        Song("3", "Hotel California", "Eagles", null),
+        Song("4", "Smells Like Teen Spirit", "Nirvana", null)
+    )
+
+    val fakeLikes = listOf(
+        Song("5", "Blinding Lights", "The Weeknd", null),
+        Song("6", "As It Was", "Harry Styles", null),
+        Song("7", "good 4 u", "Olivia Rodrigo", null),
+        Song("8", "Levitating", "Dua Lipa", null)
+    )
+
     ProfileScreen(
         username = "Ricky Bobby",
         pfpUrl = null,
-        uniqueSongs = 142
+        uniqueSongs = 142,
+        listeningHistory = fakeHistory,
+        likedSongs = fakeLikes,
     )
 }

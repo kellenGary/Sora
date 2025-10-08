@@ -14,14 +14,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.ui.MainScreen
+import com.example.sora.ui.ProfileScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,7 +53,9 @@ class MainActivity : ComponentActivity() {
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize().padding(innerPadding)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 ) {
                     NavHost(
                         navController = navController,
@@ -64,6 +69,21 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("main") {
                             MainScreen(navController, authViewModel)
+                        }
+                        composable(
+                            route="profile/{username}",
+                            arguments = listOf(navArgument("username") { type =
+                                NavType.StringType })
+                        ) {  backStackEntry ->
+                            val username = backStackEntry.arguments?.getString("username") ?: "user"
+
+                            ProfileScreen(
+                                username = username,
+                                pfpUrl = null, // TODO: Replace with actual value
+                                uniqueSongs = 0, // TODO: Replace with actual value
+                                listeningHistory = listOf(), // TODO: Replace with actual values
+                                likedSongs = listOf(), // TODO: Replace with actual values
+                            )
                         }
                     }
                 }
