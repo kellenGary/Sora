@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.sora.R
 
 // The data class for our song information, now lives here.
@@ -60,17 +59,4 @@ fun SongCard(msg: Song) {
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSongCard() {
-    val sampleSong = Song(
-        user = "Nick Haskins",
-        timeAdded = "5 minutes ago",
-        artist = "Lauryn Hill",
-        songName = "The Miseducation of Lauryn Hill"
-    )
-
-    SongCard(msg = sampleSong)
 }
