@@ -9,9 +9,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.sora.auth.AuthViewModel
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+import com.example.sora.auth.IAuthViewModel
 
 @Composable
-fun MainScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+fun MainScreen(
+    navController: NavController,
+    authViewModel: IAuthViewModel = viewModel<AuthViewModel>()
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -37,4 +43,19 @@ fun MainScreen(navController: NavController, authViewModel: AuthViewModel = view
             Text("Sign Out")
         }
     }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewMainScreen() {
+    val fakeNavController = rememberNavController()
+
+    // Create a fake ViewModel for preview purposes
+    val fakeAuthViewModel = object : IAuthViewModel {
+        override fun signOut() {
+        }
+    }
+
+    MainScreen(navController = fakeNavController, authViewModel = fakeAuthViewModel)
 }

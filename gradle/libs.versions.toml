@@ -16,6 +16,9 @@ navigationCompose = "2.7.7"
 glance = "1.1.0-rc01"
 supabaseBom = "2.4.4"
 ktor = "2.3.11"
+coilCompose = "3.2.0"
+coil = "2.4.0"
+coilComposeVersion = "2.4.0"
 
 [libraries]
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
@@ -52,6 +55,9 @@ manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 appauth = { group = "net.openid", name = "appauth", version.ref = "appauth" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coilCompose" }
+coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
+coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilComposeVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

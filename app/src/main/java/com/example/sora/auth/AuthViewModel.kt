@@ -23,7 +23,7 @@ data class AuthUiState(
     val isSpotifyConnected: Boolean = false
 )
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel : ViewModel(), IAuthViewModel {
     private val authRepository = AuthRepository()
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -71,7 +71,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun signOut() {
+    override fun signOut() {
         viewModelScope.launch {
             authRepository.signOut()
                 .onSuccess {
