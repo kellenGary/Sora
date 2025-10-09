@@ -1,5 +1,6 @@
 package com.example.sora.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,6 +25,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import coil.compose.AsyncImage
 
 // TODO: Edit this when we are pulling real song data from spotify, may need to change structure
@@ -34,17 +39,37 @@ data class Song(
     val albumArtUrl: String?
 )
 
+private const val TAG = "ProfileScreen"
+
 /**
  * Main composable screen that houses the entire profile page.
  */
 @Composable
 fun ProfileScreen(
     username: String,
-    pfpUrl: String?,
+    pfpUrl: Any?,
     uniqueSongs: Int,
     listeningHistory: List<Song>,
     likedSongs: List<Song>,
 ) {
+    LaunchedEffect(Unit) {
+        Log.d(TAG, "ProfileScreen Composed for user: $username")
+    }
+
+    var currentPfpUrl by remember { mutableStateOf(pfpUrl)}
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            if (uri != null) {
+                Log.d(TAG, "Photo selected with URI: $uri")
+                currentPfpUrl = uri
+            } else {
+                Log.d(TAG, "No photo selected")
+            }
+        }
+    )
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -54,7 +79,12 @@ fun ProfileScreen(
         item {
             ProfileHeader(
                 username = username,
-                pfpUrl = pfpUrl,
+                pfpUrl = currentPfpUrl,
+                onPfpClick = {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
                 subHeadingText = "$uniqueSongs unique songs played"
             )
         }
@@ -83,14 +113,15 @@ fun ProfileScreen(
 @Composable
 fun ProfileHeader(
     username: String,
-    pfpUrl: String?,
+    pfpUrl: Any?,
+    onPfpClick: () -> Unit,
     subHeadingText: String
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically // Aligns items vertically in the center of the Row
+        verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
             model = pfpUrl,
@@ -102,6 +133,7 @@ fun ProfileHeader(
                 .size(100.dp)
                 .clip(CircleShape)
                 .background(Color.LightGray)
+                .clickable { onPfpClick() }
         )
 
         // Spacer between image and text
