@@ -32,9 +32,8 @@ object SpotifyAuthManager {
         ("https://accounts.spotify.com/api/token").toUri()
     )
 
-    private const val CLIENT_ID = "6918fb3c3d6245a9b88c3ad93fff7675"
-    private val CLIENT_SECRET = BuildConfig.SPOTIFY_CLIENT_SECRET
-    private val REDIRECT_URI = Uri.parse("com.example.sora://callback")
+    private const val CLIENT_ID = BuildConfig.SPOTIFY_CLIENT_ID
+    private val REDIRECT_URI = "com.example.sora://callback".toUri()
 
     private val scopes = arrayOf(
         "user-read-private",
@@ -49,7 +48,6 @@ object SpotifyAuthManager {
         Log.d(TAG, "Creating authorization request")
         Log.d(TAG, "Client ID: $CLIENT_ID")
         Log.d(TAG, "Redirect URI: $REDIRECT_URI")
-        Log.d(TAG, "Client Secret length: ${CLIENT_SECRET.length}")
 
         val request = AuthorizationRequest.Builder(
             serviceConfig,
@@ -81,9 +79,8 @@ object SpotifyAuthManager {
 
         val authService = AuthorizationService(context)
 
-        val tokenRequest = authResponse.createTokenExchangeRequest(
-            mapOf("client_secret" to CLIENT_SECRET)
-        )
+        // Create token exchange request without client secret (using PKCE only)
+        val tokenRequest = authResponse.createTokenExchangeRequest()
 
         Log.d(TAG, "Making token request to: ${tokenRequest.configuration.tokenEndpoint}")
 
