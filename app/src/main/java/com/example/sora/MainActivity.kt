@@ -26,6 +26,7 @@ import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
+import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,6 +35,7 @@ private val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
+    private lateinit var profileViewModel: ProfileViewModel
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             authViewModel = viewModel()
+            profileViewModel = viewModel()
 
             // Handle Spotify callback intent
             LaunchedEffect(intent) {
@@ -78,17 +81,15 @@ class MainActivity : ComponentActivity() {
                             // FriendsScreen()
                         }
                         composable(
-                            route="profile/{username}",
-                            arguments = listOf(navArgument("username") { type =
+                            route="profile/{userId}",
+                            arguments = listOf(navArgument("userId") { type =
                                 NavType.StringType })
                         ) {  backStackEntry ->
-                            val username = backStackEntry.arguments?.getString("username") ?: "user"
+                            // TODO: Shouldnt fail this next userID
+                            val userId = backStackEntry.arguments?.getString("username") ?: "user"
                             ProfileScreen(
-                                username = username,
-                                pfpUrl = null, // TODO: Replace with actual value
-                                uniqueSongs = 0, // TODO: Replace with actual value
-                                listeningHistory = listOf(), // TODO: Replace with actual values
-                                likedSongs = listOf(), // TODO: Replace with actual values
+                                userId = userId,
+                                profileViewModel = profileViewModel
                             )
                         }
                     }
