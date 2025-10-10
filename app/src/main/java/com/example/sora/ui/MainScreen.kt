@@ -1,5 +1,6 @@
 package com.example.sora.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,6 +25,12 @@ fun MainScreen(
     navController: NavController,
     authViewModel: IAuthViewModel = viewModel<AuthViewModel>()
 ) {
+    DisposableEffect(Unit) {
+        Log.d("Home", "onCreateView called")
+        onDispose {
+            Log.d("Home", "onDestroyView called")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -44,9 +51,6 @@ fun MainScreen(
                 val currentUser = AuthRepository().getCurrentUser()
                 val userEmail = currentUser?.identities?.firstOrNull()?.identityData?.jsonObject?.get("email")?.jsonPrimitive?.content
                 val username = userEmail?.substringBefore('@') ?: "user"
-
-
-
                 navController.navigate("profile/$username")
             }
         ) {
@@ -65,6 +69,7 @@ fun MainScreen(
         ) {
             Text("Sign Out")
         }
+        BottomNavBar(navController = navController)
     }
 }
 
