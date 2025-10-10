@@ -55,10 +55,7 @@ fun ProfileScreen(
     val uiState by profileViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        profileViewModel.loadProfile(null) // you’ll add this below
-    }
-
-    LaunchedEffect(Unit) {
+        profileViewModel.loadProfile(null)
         Log.d(TAG, "ProfileScreen Composed for user: ${uiState.displayName}")
     }
 
