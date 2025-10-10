@@ -29,7 +29,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import com.example.sora.viewmodel.IProfileViewModel
 
 // TODO: Edit this when we are pulling real song data from spotify, may need to change structure
 data class Song(
@@ -46,24 +49,27 @@ private const val TAG = "ProfileScreen"
  */
 @Composable
 fun ProfileScreen(
-    username: String,
-    pfpUrl: Any?,
-    uniqueSongs: Int,
-    listeningHistory: List<Song>,
-    likedSongs: List<Song>,
+    userId: String,
+    profileViewModel: IProfileViewModel,
 ) {
+    val uiState by profileViewModel.uiState.collectAsState()
+
     LaunchedEffect(Unit) {
-        Log.d(TAG, "ProfileScreen Composed for user: $username")
+        profileViewModel.loadProfile(null) // you’ll add this below
     }
 
-    var currentPfpUrl by remember { mutableStateOf(pfpUrl)}
+    LaunchedEffect(Unit) {
+        Log.d(TAG, "ProfileScreen Composed for user: ${uiState.displayName}")
+    }
+
+    val context = LocalContext.current
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
                 Log.d(TAG, "Photo selected with URI: $uri")
-                currentPfpUrl = uri
+                profileViewModel.updateAvatar(context, uri)
             } else {
                 Log.d(TAG, "No photo selected")
             }
@@ -78,14 +84,14 @@ fun ProfileScreen(
         // Top container for profile info
         item {
             ProfileHeader(
-                username = username,
-                pfpUrl = currentPfpUrl,
+                username = uiState.displayName ?: "User",
+                pfpUrl = uiState.avatarUrl,
                 onPfpClick = {
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
                 },
-                subHeadingText = "$uniqueSongs unique songs played"
+                subHeadingText = "${uiState.uniqueSongs} unique songs played"
             )
         }
 
@@ -93,7 +99,7 @@ fun ProfileScreen(
         item {
             ExpandableSongSection(
                 title = "Listening History",
-                songs = listeningHistory
+                songs = uiState.listeningHistory
             )
         }
 
@@ -101,7 +107,7 @@ fun ProfileScreen(
         item {
             ExpandableSongSection(
                 title = "Likes",
-                songs = likedSongs
+                songs = uiState.likedSongs
             )
         }
     }
@@ -304,11 +310,30 @@ fun ProfileScreenPreview() {
         Song("8", "Levitating", "Dua Lipa", null)
     )
 
+    // --- Mock ViewModel implementing IProfileViewModel ---
+    val fakeViewModel = object : com.example.sora.viewmodel.IProfileViewModel {
+        override val uiState = kotlinx.coroutines.flow.MutableStateFlow(
+            com.example.sora.viewmodel.ProfileUiState(
+                displayName = "Ricky Bobby",
+                avatarUrl = null,
+                uniqueSongs = 142,
+                listeningHistory = fakeHistory,
+                likedSongs = fakeLikes
+            )
+        )
+
+        override fun loadProfile(userId: String?) {
+            // No-op for preview
+        }
+
+        override fun updateAvatar(context: android.content.Context, uri: android.net.Uri) {
+            // No-op for preview
+        }
+    }
+
+    // --- Call the screen with the fake ViewModel ---
     ProfileScreen(
-        username = "Ricky Bobby",
-        pfpUrl = null,
-        uniqueSongs = 142,
-        listeningHistory = fakeHistory,
-        likedSongs = fakeLikes,
+        userId = "12345",
+        profileViewModel = fakeViewModel
     )
 }
