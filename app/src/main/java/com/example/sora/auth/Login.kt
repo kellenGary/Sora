@@ -1,5 +1,6 @@
 package com.example.sora.auth
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,6 +20,13 @@ import androidx.navigation.NavController
 
 @Composable
 fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+    DisposableEffect(Unit) {
+        Log.d("Login", "onCreateView called")
+        onDispose {
+            Log.d("Login", "onDestroyView called")
+        }
+    }
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
