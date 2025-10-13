@@ -69,49 +69,25 @@ fun SettingCard() {
             .padding(12.dp, 0.dp)
             .height(88.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = Color.Black.copy(alpha = 0.1F),
-                    shape = RoundedCornerShape(4.dp)
-                )
-                .fillMaxSize()
-                .weight(1f)
-
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Box(
-            modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = Color.Black.copy(alpha = 0.1F),
-                    shape = RoundedCornerShape(4.dp)
-                )
-                .fillMaxSize()
-                .weight(1f)
-
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Box(
-            modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = Color.Black.copy(alpha = 0.1F),
-                    shape = RoundedCornerShape(4.dp)
-                )
-                .fillMaxSize()
-                .weight(1f)
-
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
+        repeat(3) {
+            SettingOptionBox(modifier = Modifier.weight(1f))
+            if (it < 2) Spacer(modifier = Modifier.width(8.dp))
+        }
     }
 
+}
+
+@Composable
+fun SettingOptionBox(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .border(
+                width = 1.dp,
+                color = Color.Black.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(4.dp)
+            )
+            .fillMaxSize()
+    )
 }
 
 @Composable
