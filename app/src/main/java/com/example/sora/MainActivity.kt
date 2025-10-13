@@ -14,14 +14,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.sora.auth.AuthRepository
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.ui.MainScreen
+import com.example.sora.ui.ProfileScreen
+import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +35,7 @@ private val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
+    private lateinit var profileViewModel: ProfileViewModel
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +47,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             authViewModel = viewModel()
+            profileViewModel = viewModel()
 
             // Handle Spotify callback intent
             LaunchedEffect(intent) {
@@ -50,7 +57,9 @@ class MainActivity : ComponentActivity() {
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize().padding(innerPadding)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 ) {
                     NavHost(
                         navController = navController,
@@ -64,6 +73,24 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("main") {
                             MainScreen(navController, authViewModel)
+                        }
+                        composable("map") {
+                            // MapScreen()
+                        }
+                        composable("friends") {
+                            // FriendsScreen()
+                        }
+                        composable(
+                            route="profile/{userId}",
+                            arguments = listOf(navArgument("userId") { type =
+                                NavType.StringType })
+                        ) {  backStackEntry ->
+                            // TODO: Shouldnt fail this next userID
+                            val userId = backStackEntry.arguments?.getString("username") ?: "user"
+                            ProfileScreen(
+                                userId = userId,
+                                profileViewModel = profileViewModel
+                            )
                         }
                     }
                 }
@@ -87,31 +114,16 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun handleSpotifyCallback(intent: Intent?, authViewModel: AuthViewModel) {
-        Log.d(TAG, "==================== HANDLE SPOTIFY CALLBACK ====================")
         intent?.data?.let { uri ->
-            Log.d(TAG, "Callback URI received: $uri")
-            Log.d(TAG, "URI scheme: ${uri.scheme}")
-            Log.d(TAG, "URI host: ${uri.host}")
-            Log.d(TAG, "URI path: ${uri.path}")
-            Log.d(TAG, "URI query: ${uri.query}")
-            
             if (uri.scheme == "com.example.sora" && uri.host == "callback") {
                 Log.d(TAG, "Valid Spotify callback detected, processing...")
                 val authResponse = SpotifyAuthManager.handleAuthorizationResponse(intent)
-                
                 authResponse?.let { response ->
                     Log.d(TAG, "Valid auth response received, starting token exchange...")
                     CoroutineScope(Dispatchers.Main).launch {
                         try {
                             val tokenResult = SpotifyAuthManager.exchangeCodeForTokens(this@MainActivity, response)
                             tokenResult.onSuccess { tokenResponse ->
-                                Log.d(TAG, "==================== FINAL TOKEN RESPONSE ====================")
-                                Log.d(TAG, "Access Token Length: ${tokenResponse.accessToken.length}")
-                                Log.d(TAG, "Refresh Token Length: ${tokenResponse.refreshToken.length}")
-                                Log.d(TAG, "Expires In: ${tokenResponse.expiresIn}")
-                                Log.d(TAG, "Passing tokens to AuthViewModel...")
-                                Log.d(TAG, "==============================================================")
-                                
                                 authViewModel.handleSpotifyAuthResult(
                                     tokenResponse.accessToken,
                                     tokenResponse.refreshToken,
@@ -119,17 +131,12 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Log.d(TAG, "Tokens successfully passed to AuthViewModel")
                             }.onFailure { exception ->
-                                Log.e(TAG, "==================== TOKEN EXCHANGE FAILURE ====================")
                                 Log.e(TAG, "Token exchange failed: ${exception.message}")
-                                Log.e(TAG, "Exception: ${exception.stackTraceToString()}")
-                                Log.e(TAG, "================================================================")
                                 authViewModel.setErrorMessage("Spotify connection failed: ${exception.message}")
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "==================== EXCEPTION IN CALLBACK ====================")
                             Log.e(TAG, "Exception during token exchange: ${e.message}")
                             Log.e(TAG, "Stack trace: ${e.stackTraceToString()}")
-                            Log.e(TAG, "===============================================================")
                             authViewModel.setErrorMessage("Error connecting to Spotify: ${e.message}")
                         }
                     }
@@ -139,10 +146,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 Log.w(TAG, "URI scheme/host mismatch - Expected: com.example.sora://callback")
             }
-        } ?: run {
-            Log.w(TAG, "Intent data is null - no callback URI")
         }
-        Log.d(TAG, "=================================================================")
     }
 
     override fun onStart() {

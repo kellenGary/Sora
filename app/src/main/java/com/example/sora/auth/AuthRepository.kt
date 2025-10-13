@@ -1,7 +1,9 @@
 package com.example.sora.auth
 
+import com.example.sora.data.model.Profile
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.buildJsonObject
@@ -12,7 +14,7 @@ class AuthRepository {
 
     suspend fun signUp(email: String, password: String, spotifyData: SpotifyAuthData? = null): Result<Unit> {
         return try {
-            client.auth.signUpWith(Email) {
+            val user = client.auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
                 this.data = buildJsonObject {
@@ -25,6 +27,14 @@ class AuthRepository {
                         put("spotify_connected", false)
                     }
                 }
+            }
+            if (user != null) {
+                val profile = Profile(
+                    id = user.id,
+                    displayName = email.substringBefore('@'),
+                )
+
+                client.postgrest["profiles"].insert(profile);
             }
             Result.success(Unit)
         } catch (e: Exception) {
