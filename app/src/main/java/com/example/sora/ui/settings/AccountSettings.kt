@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,42 +32,71 @@ fun AccountSettings() {
             fontWeight = FontWeight.W500,
             fontSize = 18.sp,
         )
-        Row (
-            verticalAlignment = Alignment.CenterVertically
+
+        SettingsCard(
+            text = "Change Password",
+            subText = "Update your password",
+            image = "\uD83D\uDD11",
+        )
+
+        SettingsCard(
+            text = "Two-Factor Authentication",
+            subText = "Enhance security",
+            image = "\uD83D\uDCF1",
+        )
+
+        SettingsCard(
+            text = "Linked Accounts",
+            subText = "Manage linked services",
+            image = "\uD83D\uDD17",
+        )
+    }
+}
+
+@Composable
+fun SettingsCard(
+    text: String,
+    subText: String,
+    image: String,
+) {
+    Row (
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .width(32.dp)
+                .height(32.dp)
+                .clip(CircleShape)
+                .background(color = Color.Black.copy(alpha = 0.05F)),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .width(32.dp)
-                    .height(32.dp)
-                    .clip(CircleShape)
-                    .background(color = Color.Black.copy(alpha = 0.05F))
-            ) {
-
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Column(
-                modifier = Modifier
-                    .padding(0.dp, 12.dp)
-            ) {
-                Text(
-                    text = "Change Password",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.W400,
-                )
-                Text(
-                    text = "Update your password",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.W400,
-                    color = Color.Black.copy(alpha = 0.5F)
-                )
-            }
-
-
+            Text(image)
         }
 
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Column(
+            modifier = Modifier
+                .padding(0.dp, 12.dp)
+        ) {
+            Text(
+                text = text,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.W400,
+            )
+            Text(
+                text = subText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.W400,
+                color = Color.Black.copy(alpha = 0.5F)
+            )
+        }
     }
+
+    HorizontalDivider(
+        thickness = 1.dp,
+        color = Color.LightGray
+    )
 }
 
 @Preview(showBackground = true)
