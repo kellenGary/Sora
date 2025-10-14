@@ -65,6 +65,17 @@ class AuthRepository {
         }
     }
 
+    suspend fun changePassword(password: String): Result<Unit> {
+        return try {
+            client.auth.updateUser {
+                this.password = password
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun signOut(): Result<Unit> {
         return try {
             client.auth.signOut()

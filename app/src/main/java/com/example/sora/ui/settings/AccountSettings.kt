@@ -1,10 +1,12 @@
 package com.example.sora.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -20,9 +22,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @Composable
-fun AccountSettings() {
+fun AccountSettings(navController: NavController? = null) {
     Column(
         modifier = Modifier
             .padding(12.dp, 0.dp)
@@ -37,18 +40,21 @@ fun AccountSettings() {
             text = "Change Password",
             subText = "Update your password",
             image = "\uD83D\uDD11",
+            onClick = { navController?.navigate("change_password") }
         )
 
         SettingsCard(
             text = "Two-Factor Authentication",
             subText = "Enhance security",
             image = "\uD83D\uDCF1",
+            onClick = {  }
         )
 
         SettingsCard(
             text = "Linked Accounts",
             subText = "Manage linked services",
             image = "\uD83D\uDD17",
+            onClick = {  }
         )
     }
 }
@@ -58,9 +64,13 @@ fun SettingsCard(
     text: String,
     subText: String,
     image: String,
+    onClick: () -> Unit
 ) {
     Row (
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
     ) {
         Box(
             modifier = Modifier

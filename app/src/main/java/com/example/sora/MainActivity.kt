@@ -19,13 +19,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.sora.auth.AuthRepository
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
+import com.example.sora.ui.settings.ChangePasswordScreen
+import com.example.sora.ui.settings.SettingScreen
 import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,13 +37,13 @@ private val TAG = "MainActivity"
 class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
     private lateinit var profileViewModel: ProfileViewModel
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate(Bundle?) called")
         Log.d(TAG, "Intent: ${intent?.data}")
         Log.d(TAG, "Intent action: ${intent?.action}")
-        
+
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
@@ -80,6 +81,12 @@ class MainActivity : ComponentActivity() {
                         composable("friends") {
                             // FriendsScreen()
                         }
+                        composable("settings") {
+                            SettingScreen(navController)
+                        }
+                        composable("change_password") {
+                            ChangePasswordScreen(navController, authViewModel)
+                        }
                         composable(
                             route="profile/{userId}",
                             arguments = listOf(navArgument("userId") { type =
@@ -97,14 +104,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d(TAG, "onNewIntent() called")
         Log.d(TAG, "New intent: ${intent.data}")
         Log.d(TAG, "New intent action: ${intent.action}")
         setIntent(intent)
-        
+
         // Handle Spotify callback with the stored authViewModel
         if (::authViewModel.isInitialized) {
             handleSpotifyCallback(intent, authViewModel)
@@ -112,7 +119,7 @@ class MainActivity : ComponentActivity() {
             Log.e(TAG, "AuthViewModel not initialized yet")
         }
     }
-    
+
     private fun handleSpotifyCallback(intent: Intent?, authViewModel: AuthViewModel) {
         intent?.data?.let { uri ->
             if (uri.scheme == "com.example.sora" && uri.host == "callback") {

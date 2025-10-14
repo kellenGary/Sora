@@ -12,9 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @Composable
-fun SettingScreen() {
+fun SettingScreen(navController: NavController? = null) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -28,6 +29,7 @@ fun SettingScreen() {
 
         Spacer(modifier = Modifier.height(18.dp))
 
+        // Assuming SettingCard() and LanguageCard() are defined elsewhere
         SettingCard()
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -36,7 +38,7 @@ fun SettingScreen() {
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        AccountSettings()
+        AccountSettings(navController)
     }
 }
 
