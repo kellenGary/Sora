@@ -20,6 +20,11 @@ import androidx.navigation.NavController
 
 @Composable
 fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+    // Clear old messages immediately when this screen appears
+    LaunchedEffect(Unit) {
+        authViewModel.clearMessages()
+    }
+
     DisposableEffect(Unit) {
         Log.d("Login", "onCreateView called")
         onDispose {
