@@ -29,6 +29,7 @@ fun SettingScreen(navController: NavController? = null) {
 
         Spacer(modifier = Modifier.height(18.dp))
 
+        // Assuming SettingCard() and LanguageCard() are defined elsewhere
         SettingCard()
 
         Spacer(modifier = Modifier.height(30.dp))
