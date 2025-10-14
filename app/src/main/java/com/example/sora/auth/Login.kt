@@ -39,6 +39,8 @@ fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel
                 popUpTo("login") { inclusive = true }
             }
         }
+
+        authViewModel.clearMessages()
     }
 
     Box(

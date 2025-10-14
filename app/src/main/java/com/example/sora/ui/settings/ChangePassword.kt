@@ -61,13 +61,6 @@ fun ChangePasswordScreen(navController: NavController, authViewModel: IAuthViewM
         }
     }
 
-
-    LaunchedEffect(Unit) {
-        if (uiState.successMessage == "Login successful!") {
-            authViewModel.clearMessages()
-        }
-    }
-
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
