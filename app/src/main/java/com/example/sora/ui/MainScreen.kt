@@ -13,11 +13,8 @@ import com.example.sora.auth.AuthViewModel
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.sora.auth.AuthRepository
-import com.example.sora.auth.AuthUiState
 import com.example.sora.auth.IAuthViewModel
-import com.example.sora.ui.settings.FakeAuthViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.example.sora.utils.FakeAuthViewModel
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -73,20 +70,6 @@ fun MainScreen(
     }
 }
 
-class FakeAuthViewModel : IAuthViewModel {
-    private val _uiState = MutableStateFlow(AuthUiState())
-    override val uiState: StateFlow<AuthUiState> = _uiState
-
-    override fun signOut() {}
-
-    override fun setErrorMessage(message: String) {}
-
-    override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {}
-
-    override fun changePassword(password: String) { }
-
-    override fun clearMessages() { }
-}
 
 @Preview(showBackground = true)
 @Composable

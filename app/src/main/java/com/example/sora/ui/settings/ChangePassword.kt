@@ -32,14 +32,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.sora.auth.AuthUiState
-import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.IAuthViewModel
+import com.example.sora.utils.FakeAuthViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import androidx.compose.material3.TopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,21 +103,6 @@ fun ChangePasswordScreen(navController: NavController, authViewModel: IAuthViewM
             }
         }
     }
-}
-
-class FakeAuthViewModel : IAuthViewModel {
-    private val _uiState = MutableStateFlow(AuthUiState())
-    override val uiState: StateFlow<AuthUiState> = _uiState
-
-    override fun signOut() {}
-
-    override fun setErrorMessage(message: String) {}
-
-    override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {}
-
-    override fun changePassword(password: String) { }
-
-    override fun clearMessages() { }
 }
 
 @Preview(showBackground = true)
