@@ -12,7 +12,7 @@ import com.example.sora.R
 @Composable
 fun BottomNavBar(navController: NavController) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
@@ -44,11 +44,19 @@ fun BottomNavBar(navController: NavController) {
                 )
             }
             IconButton(
-                onClick = {navController.navigate("profile")},
+                onClick = {navController.navigate("profile/user")},
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_profile),
                     contentDescription = "Profile"
+                )
+            }
+            IconButton(
+                onClick = {navController.navigate("settings")},
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_settings_24),
+                    contentDescription = "Settings"
                 )
             }
         }
