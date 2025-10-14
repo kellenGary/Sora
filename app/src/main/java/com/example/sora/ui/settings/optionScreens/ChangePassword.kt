@@ -1,6 +1,5 @@
-package com.example.sora.ui.settings
+package com.example.sora.ui.settings.optionScreens
 
-import androidx.activity.result.launch
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth

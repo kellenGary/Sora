@@ -3,6 +3,7 @@ package com.example.sora.auth
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.jan.supabase.gotrue.user.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,8 @@ data class AuthUiState(
     val spotifyAuthData: SpotifyAuthData? = null,
     val isSpotifyConnected: Boolean = false
 )
+
+private const val TAG = "AuthViewModel"
 
 class AuthViewModel : ViewModel(), IAuthViewModel {
     private val authRepository = AuthRepository()
@@ -61,6 +64,9 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
                         isLoggedIn = true,
                         successMessage = "Login successful!"
                     )
+
+                    val user = authRepository.getCurrentUser()
+                    refreshSpotifyStatus(user)
                 }
                 .onFailure { exception ->
                     _uiState.value = _uiState.value.copy(
@@ -108,35 +114,54 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
         _uiState.value = _uiState.value.copy(errorMessage = message)
     }
 
+    fun refreshSpotifyStatus(user: UserInfo?) {
+        val spotifyData = SpotifyCredentialsManager.getSpotifyCredentials(user)
+        val isConnected = SpotifyCredentialsManager.isSpotifyConnected(user)
+
+        _uiState.value = _uiState.value.copy(
+            spotifyAuthData = spotifyData,
+            isSpotifyConnected = isConnected
+        )
+    }
+
     override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {
-        Log.d("AuthViewModel", "==================== SPOTIFY AUTH RESULT ====================")
-        Log.d("AuthViewModel", "Received in AuthViewModel:")
-        Log.d("AuthViewModel", "  Access Token Length: ${accessToken.length}")
-        Log.d("AuthViewModel", "  Access Token (first 30 chars): ${accessToken.take(30)}...")
-        Log.d("AuthViewModel", "  Refresh Token Length: ${refreshToken.length}")
-        Log.d("AuthViewModel", "  Refresh Token (first 30 chars): ${refreshToken.take(30)}...")
-        Log.d("AuthViewModel", "  Expires In: $expiresIn")
+        Log.d(TAG, "==================== SPOTIFY AUTH RESULT ====================")
+        Log.d(TAG, "Received in AuthViewModel:")
+        Log.d(TAG, "  Access Token Length: ${accessToken.length}")
+        Log.d(TAG, "  Access Token (first 30 chars): ${accessToken.take(30)}...")
+        Log.d(TAG, "  Refresh Token Length: ${refreshToken.length}")
+        Log.d(TAG, "  Refresh Token (first 30 chars): ${refreshToken.take(30)}...")
+        Log.d(TAG, "  Expires In: $expiresIn")
         
         val spotifyData = SpotifyAuthData(accessToken, refreshToken, expiresIn)
         
-        Log.d("AuthViewModel", "Creating SpotifyAuthData object...")
-        Log.d("AuthViewModel", "SpotifyAuthData created: $spotifyData")
+        Log.d(TAG, "Creating SpotifyAuthData object...")
+        Log.d(TAG, "SpotifyAuthData created: $spotifyData")
         
         _uiState.value = _uiState.value.copy(
             spotifyAuthData = spotifyData,
             isSpotifyConnected = true,
             successMessage = "Spotify connected successfully!"
         )
+
+        viewModelScope.launch {
+            val result = authRepository.updateSpotifyCredentials(spotifyData)
+            result.onSuccess {
+                Log.d(TAG, "Spotify credentials persisted to Supabase")
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to save Spotify credentials: ${e.message}")
+            }
+        }
         
-        Log.d("AuthViewModel", "UI State updated:")
-        Log.d("AuthViewModel", "  isSpotifyConnected: ${_uiState.value.isSpotifyConnected}")
-        Log.d("AuthViewModel", "  spotifyAuthData present: ${_uiState.value.spotifyAuthData != null}")
-        Log.d("AuthViewModel", "  successMessage: ${_uiState.value.successMessage}")
-        Log.d("AuthViewModel", "=============================================================")
+        Log.d(TAG, "UI State updated:")
+        Log.d(TAG, "  isSpotifyConnected: ${_uiState.value.isSpotifyConnected}")
+        Log.d(TAG, "  spotifyAuthData present: ${_uiState.value.spotifyAuthData != null}")
+        Log.d(TAG, "  successMessage: ${_uiState.value.successMessage}")
+        Log.d(TAG, "=============================================================")
     }
 
     fun clearSpotifyAuth() {
-        Log.d("AuthViewModel", "Clearing Spotify authentication")
+        Log.d(TAG, "Clearing Spotify authentication")
         _uiState.value = _uiState.value.copy(
             spotifyAuthData = null,
             isSpotifyConnected = false

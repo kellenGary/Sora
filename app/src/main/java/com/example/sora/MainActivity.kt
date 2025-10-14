@@ -6,13 +6,11 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -28,8 +26,9 @@ import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.ui.BottomNavBar
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
-import com.example.sora.ui.settings.ChangePasswordScreen
+import com.example.sora.ui.settings.optionScreens.ChangePasswordScreen
 import com.example.sora.ui.settings.SettingScreen
+import com.example.sora.ui.settings.optionScreens.LinkedAccountScreen
 import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -101,6 +100,9 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("change_password") {
                         ChangePasswordScreen(navController, authViewModel)
+                    }
+                    composable("linked_accounts") {
+                        LinkedAccountScreen(navController, authViewModel)
                     }
                     composable(
                         route="profile/{userId}",
