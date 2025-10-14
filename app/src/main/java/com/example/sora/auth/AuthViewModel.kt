@@ -71,6 +71,26 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
         }
     }
 
+    override fun changePassword(password: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+            authRepository.changePassword(password)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        successMessage = "Password changed successfully!"
+                    )
+                }
+                .onFailure { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Failed to change password"
+                    )
+                }
+        }
+    }
+
     override fun signOut() {
         viewModelScope.launch {
             authRepository.signOut()
@@ -80,7 +100,7 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
         }
     }
 
-    fun clearMessages() {
+    override fun clearMessages() {
         _uiState.value = _uiState.value.copy(errorMessage = null, successMessage = null)
     }
 

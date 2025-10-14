@@ -11,38 +11,42 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.sora.auth.AuthRepository
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
+import com.example.sora.ui.BottomNavBar
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
+import com.example.sora.ui.settings.ChangePasswordScreen
+import com.example.sora.ui.settings.SettingScreen
 import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private val TAG = "MainActivity"
+private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
     private lateinit var profileViewModel: ProfileViewModel
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate(Bundle?) called")
         Log.d(TAG, "Intent: ${intent?.data}")
         Log.d(TAG, "Intent action: ${intent?.action}")
-        
+
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
@@ -54,57 +58,74 @@ class MainActivity : ComponentActivity() {
                 handleSpotifyCallback(intent, authViewModel)
             }
 
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                Box(
-                    contentAlignment = Alignment.Center,
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    if (currentRoute != null && (
+                                currentRoute.startsWith("main") ||
+                                        currentRoute.startsWith("map") ||
+                                        currentRoute.startsWith("friends") ||
+                                        currentRoute.startsWith("settings") ||
+                                        currentRoute.startsWith("profile")
+                                )) {
+                        BottomNavBar(navController)
+                    }
+                }
+            ) { innerPadding ->
+                NavHost(
+                    navController = navController,
+                    startDestination = "login",
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = "login"
-                    ) {
-                        composable("login") {
-                            Login(navController, authViewModel)
-                        }
-                        composable("signup") {
-                            Signup(navController, authViewModel)
-                        }
-                        composable("main") {
-                            MainScreen(navController, authViewModel)
-                        }
-                        composable("map") {
-                            // MapScreen()
-                        }
-                        composable("friends") {
-                            // FriendsScreen()
-                        }
-                        composable(
-                            route="profile/{userId}",
-                            arguments = listOf(navArgument("userId") { type =
-                                NavType.StringType })
-                        ) {  backStackEntry ->
-                            // TODO: Shouldnt fail this next userID
-                            val userId = backStackEntry.arguments?.getString("username") ?: "user"
-                            ProfileScreen(
-                                userId = userId,
-                                profileViewModel = profileViewModel
-                            )
-                        }
+                    composable("login") {
+                        Login(navController, authViewModel)
+                    }
+                    composable("signup") {
+                        Signup(navController, authViewModel)
+                    }
+                    composable("main") {
+                        MainScreen(navController, authViewModel)
+                    }
+                    composable("map") {
+                        // MapScreen()
+                    }
+                    composable("friends") {
+                        // FriendsScreen()
+                    }
+                    composable("settings") {
+                        SettingScreen(navController)
+                    }
+                    composable("change_password") {
+                        ChangePasswordScreen(navController, authViewModel)
+                    }
+                    composable(
+                        route="profile/{userId}",
+                        arguments = listOf(navArgument("userId") { type =
+                            NavType.StringType })
+                    ) {  backStackEntry ->
+                        // TODO: Shouldnt fail this next userID
+                        val userId = backStackEntry.arguments?.getString("userId") ?: "user"
+                        ProfileScreen(
+                            userId = userId,
+                            profileViewModel = profileViewModel
+                        )
                     }
                 }
             }
         }
     }
-    
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d(TAG, "onNewIntent() called")
         Log.d(TAG, "New intent: ${intent.data}")
         Log.d(TAG, "New intent action: ${intent.action}")
         setIntent(intent)
-        
+
         // Handle Spotify callback with the stored authViewModel
         if (::authViewModel.isInitialized) {
             handleSpotifyCallback(intent, authViewModel)
@@ -112,7 +133,7 @@ class MainActivity : ComponentActivity() {
             Log.e(TAG, "AuthViewModel not initialized yet")
         }
     }
-    
+
     private fun handleSpotifyCallback(intent: Intent?, authViewModel: AuthViewModel) {
         intent?.data?.let { uri ->
             if (uri.scheme == "com.example.sora" && uri.host == "callback") {
