@@ -11,18 +11,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
+import com.example.sora.ui.BottomNavBar
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
 import com.example.sora.ui.settings.ChangePasswordScreen
@@ -32,7 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private val TAG = "MainActivity"
+private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
@@ -55,50 +58,61 @@ class MainActivity : ComponentActivity() {
                 handleSpotifyCallback(intent, authViewModel)
             }
 
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                Box(
-                    contentAlignment = Alignment.Center,
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    if (currentRoute != null && (
+                                currentRoute.startsWith("main") ||
+                                        currentRoute.startsWith("map") ||
+                                        currentRoute.startsWith("friends") ||
+                                        currentRoute.startsWith("settings") ||
+                                        currentRoute.startsWith("profile")
+                                )) {
+                        BottomNavBar(navController)
+                    }
+                }
+            ) { innerPadding ->
+                NavHost(
+                    navController = navController,
+                    startDestination = "login",
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = "login"
-                    ) {
-                        composable("login") {
-                            Login(navController, authViewModel)
-                        }
-                        composable("signup") {
-                            Signup(navController, authViewModel)
-                        }
-                        composable("main") {
-                            MainScreen(navController, authViewModel)
-                        }
-                        composable("map") {
-                            // MapScreen()
-                        }
-                        composable("friends") {
-                            // FriendsScreen()
-                        }
-                        composable("settings") {
-                            SettingScreen(navController)
-                        }
-                        composable("change_password") {
-                            ChangePasswordScreen(navController, authViewModel)
-                        }
-                        composable(
-                            route="profile/{userId}",
-                            arguments = listOf(navArgument("userId") { type =
-                                NavType.StringType })
-                        ) {  backStackEntry ->
-                            // TODO: Shouldnt fail this next userID
-                            val userId = backStackEntry.arguments?.getString("username") ?: "user"
-                            ProfileScreen(
-                                userId = userId,
-                                profileViewModel = profileViewModel
-                            )
-                        }
+                    composable("login") {
+                        Login(navController, authViewModel)
+                    }
+                    composable("signup") {
+                        Signup(navController, authViewModel)
+                    }
+                    composable("main") {
+                        MainScreen(navController, authViewModel)
+                    }
+                    composable("map") {
+                        // MapScreen()
+                    }
+                    composable("friends") {
+                        // FriendsScreen()
+                    }
+                    composable("settings") {
+                        SettingScreen(navController)
+                    }
+                    composable("change_password") {
+                        ChangePasswordScreen(navController, authViewModel)
+                    }
+                    composable(
+                        route="profile/{userId}",
+                        arguments = listOf(navArgument("userId") { type =
+                            NavType.StringType })
+                    ) {  backStackEntry ->
+                        // TODO: Shouldnt fail this next userID
+                        val userId = backStackEntry.arguments?.getString("userId") ?: "user"
+                        ProfileScreen(
+                            userId = userId,
+                            profileViewModel = profileViewModel
+                        )
                     }
                 }
             }

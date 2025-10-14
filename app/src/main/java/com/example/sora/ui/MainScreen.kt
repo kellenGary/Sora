@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.sora.auth.AuthRepository
 import com.example.sora.auth.AuthUiState
 import com.example.sora.auth.IAuthViewModel
+import com.example.sora.ui.settings.FakeAuthViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.jsonObject
@@ -69,22 +70,28 @@ fun MainScreen(
         ) {
             Text("Sign Out")
         }
-        BottomNavBar(navController = navController)
     }
 }
 
+class FakeAuthViewModel : IAuthViewModel {
+    private val _uiState = MutableStateFlow(AuthUiState())
+    override val uiState: StateFlow<AuthUiState> = _uiState
+
+    override fun signOut() {}
+
+    override fun setErrorMessage(message: String) {}
+
+    override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {}
+
+    override fun changePassword(password: String) { }
+
+    override fun clearMessages() { }
+}
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewMainScreen() {
     val fakeNavController = rememberNavController()
-    // Create a fake ViewModel for preview purposes
-    val fakeAuthViewModel = object : IAuthViewModel {
-        override val uiState: StateFlow<AuthUiState> = MutableStateFlow(AuthUiState())
-        override fun signOut() {}
-        override fun setErrorMessage(message: String) {}
-        override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {}
-    }
 
-    MainScreen(navController = fakeNavController, authViewModel = fakeAuthViewModel)
+    MainScreen(navController = fakeNavController, authViewModel = FakeAuthViewModel())
 }

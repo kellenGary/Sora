@@ -12,7 +12,7 @@ import com.example.sora.R
 @Composable
 fun BottomNavBar(navController: NavController) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
