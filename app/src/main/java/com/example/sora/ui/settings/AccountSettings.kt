@@ -54,7 +54,7 @@ fun AccountSettings(navController: NavController? = null) {
             text = "Linked Accounts",
             subText = "Manage linked services",
             image = "\uD83D\uDD17",
-            onClick = {  }
+            onClick = { navController?.navigate("linked_accounts") }
         )
     }
 }
