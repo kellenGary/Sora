@@ -61,7 +61,7 @@ fun LinkedAccountScreen(navController: NavController, authViewModel: IAuthViewMo
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Linked Accounts") }, // Sets the title of the screen
+                title = { Text("Linked Accounts") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
