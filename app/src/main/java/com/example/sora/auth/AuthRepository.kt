@@ -1,10 +1,13 @@
 package com.example.sora.auth
 
+import com.example.sora.data.model.Profile
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 
 class AuthRepository {
@@ -12,19 +15,35 @@ class AuthRepository {
 
     suspend fun signUp(email: String, password: String, spotifyData: SpotifyAuthData? = null): Result<Unit> {
         return try {
-            client.auth.signUpWith(Email) {
+            val currentData = client.auth.currentUserOrNull()?.userMetadata?.jsonObject ?: buildJsonObject {}
+            val newData = buildJsonObject {
+                // copy existing metadata
+                currentData.forEach { (key, value) ->
+                    put(key, value)
+                }
+
+                if (spotifyData != null) {
+                    put("spotify_connected", true)
+                    put("spotify_access_token", spotifyData.accessToken)
+                    put("spotify_refresh_token", spotifyData.refreshToken)
+                    put("spotify_expires_in", spotifyData.expiresIn)
+                } else {
+                    put("spotify_connected", false)
+                }
+            }
+
+            val user = client.auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
-                this.data = buildJsonObject {
-                    spotifyData?.let { spotify ->
-                        put("spotify_access_token", spotify.accessToken)
-                        put("spotify_refresh_token", spotify.refreshToken)
-                        put("spotify_expires_in", spotify.expiresIn)
-                        put("spotify_connected", true)
-                    } ?: run {
-                        put("spotify_connected", false)
-                    }
-                }
+                this.data = newData
+            }
+            if (user != null) {
+                val profile = Profile(
+                    id = user.id,
+                    displayName = email.substringBefore('@'),
+                )
+
+                client.postgrest["profiles"].insert(profile);
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -55,10 +74,42 @@ class AuthRepository {
         }
     }
 
+    suspend fun changePassword(password: String): Result<Unit> {
+        return try {
+            client.auth.updateUser {
+                this.password = password
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun signOut(): Result<Unit> {
         return try {
             client.auth.signOut()
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateSpotifyCredentials(spotifyData: SpotifyAuthData) : Result<Unit> {
+        return try {
+            val user = client.auth.currentUserOrNull()
+            if (user != null) {
+                client.auth.updateUser {
+                    data = buildJsonObject {
+                        put("spotify_connected", true)
+                        put("spotify_access_token", spotifyData.accessToken)
+                        put("spotify_refresh_token", spotifyData.refreshToken)
+                        put("spotify_expires_in", spotifyData.expiresIn)
+                    }
+                }
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("No authenticated user found"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

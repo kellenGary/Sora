@@ -1,5 +1,6 @@
 package com.example.sora.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,10 +13,8 @@ import com.example.sora.auth.AuthViewModel
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.sora.auth.AuthRepository
-import com.example.sora.auth.AuthUiState
 import com.example.sora.auth.IAuthViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.example.sora.utils.FakeAuthViewModel
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -24,6 +23,12 @@ fun MainScreen(
     navController: NavController,
     authViewModel: IAuthViewModel = viewModel<AuthViewModel>()
 ) {
+    DisposableEffect(Unit) {
+        Log.d("Home", "onCreateView called")
+        onDispose {
+            Log.d("Home", "onDestroyView called")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -44,9 +49,6 @@ fun MainScreen(
                 val currentUser = AuthRepository().getCurrentUser()
                 val userEmail = currentUser?.identities?.firstOrNull()?.identityData?.jsonObject?.get("email")?.jsonPrimitive?.content
                 val username = userEmail?.substringBefore('@') ?: "user"
-
-
-
                 navController.navigate("profile/$username")
             }
         ) {
@@ -73,13 +75,6 @@ fun MainScreen(
 @Composable
 fun PreviewMainScreen() {
     val fakeNavController = rememberNavController()
-    // Create a fake ViewModel for preview purposes
-    val fakeAuthViewModel = object : IAuthViewModel {
-        override val uiState: StateFlow<AuthUiState> = MutableStateFlow(AuthUiState())
-        override fun signOut() {}
-        override fun setErrorMessage(message: String) {}
-        override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {}
-    }
 
-    MainScreen(navController = fakeNavController, authViewModel = fakeAuthViewModel)
+    MainScreen(navController = fakeNavController, authViewModel = FakeAuthViewModel())
 }

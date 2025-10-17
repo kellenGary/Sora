@@ -22,6 +22,17 @@ import com.example.sora.features.SpotifyAuthManager
 
 @Composable
 fun Signup(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+    // Clear old messages immediately when this screen appears
+    LaunchedEffect(Unit) {
+        authViewModel.clearMessages()
+    }
+
+    DisposableEffect(Unit) {
+        Log.d("Signup", "onCreateView called")
+        onDispose {
+            Log.d("Signup", "onDestroyView called")
+        }
+    }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
