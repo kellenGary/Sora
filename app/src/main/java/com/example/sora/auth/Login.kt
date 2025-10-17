@@ -1,5 +1,6 @@
 package com.example.sora.auth
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,6 +20,18 @@ import androidx.navigation.NavController
 
 @Composable
 fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+    // Clear old messages immediately when this screen appears
+    LaunchedEffect(Unit) {
+        authViewModel.clearMessages()
+    }
+
+    DisposableEffect(Unit) {
+        Log.d("Login", "onCreateView called")
+        onDispose {
+            Log.d("Login", "onDestroyView called")
+        }
+    }
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -31,6 +44,8 @@ fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel
                 popUpTo("login") { inclusive = true }
             }
         }
+
+        authViewModel.clearMessages()
     }
 
     Box(
