@@ -138,13 +138,13 @@ class SpotifyService {
         val json = Json.parseToJsonElement(bodyString).jsonObject
         val newAccessToken = json["access_token"]?.toString()?.trim('"')
             ?: throw Exception("No access_token in refresh response")
-        val expiresIn = json["expires_in"]?.toString()?.toIntOrNull() ?: 3600
+        val newExpiresIn = json["expires_in"]?.toString()?.toLongOrNull() ?: 3600
         val newRefreshToken = json["refresh_token"]?.toString()?.trim('"') ?: refreshToken
 
         return SpotifyAuthData(
             accessToken = newAccessToken,
             refreshToken = newRefreshToken,
-            expiresIn = 3600
+            expiresIn = newExpiresIn
         )
     }
 }
