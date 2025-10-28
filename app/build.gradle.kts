@@ -23,6 +23,7 @@ android {
 
         // Add BuildConfig field for Spotify
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"${project.findProperty("SPOTIFY_CLIENT_ID") ?: ""}\"")
+        buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"${project.findProperty("SPOTIFY_CLIENT_SECRET") ?: ""}\"")
     }
 
     buildTypes {
@@ -86,6 +87,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("io.ktor:ktor-client-android:2.3.11")
     implementation(libs.coil.kt.coil.compose)
+    implementation(libs.volley)
 
     // Tooling for previews and debugging
     debugImplementation(libs.androidx.compose.ui.tooling)

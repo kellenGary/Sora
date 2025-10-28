@@ -36,6 +36,15 @@ fun BottomNavBar(navController: NavController) {
                 )
             }
             IconButton(
+                onClick = {navController.navigate("library")},
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_book),
+                    contentDescription = "Library"
+                )
+
+            }
+            IconButton(
                 onClick = {navController.navigate("friends")},
             ) {
                 Icon(

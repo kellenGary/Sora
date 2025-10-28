@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,11 +25,13 @@ import com.example.sora.auth.Login
 import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.ui.BottomNavBar
+import com.example.sora.ui.LibraryScreen
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
 import com.example.sora.ui.settings.optionScreens.ChangePasswordScreen
 import com.example.sora.ui.settings.SettingScreen
 import com.example.sora.ui.settings.optionScreens.LinkedAccountScreen
+import com.example.sora.viewmodel.LibraryViewModel
 import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,6 +68,7 @@ class MainActivity : ComponentActivity() {
                     if (currentRoute != null && (
                                 currentRoute.startsWith("main") ||
                                         currentRoute.startsWith("map") ||
+                                        currentRoute.startsWith("library") ||
                                         currentRoute.startsWith("friends") ||
                                         currentRoute.startsWith("settings") ||
                                         currentRoute.startsWith("profile")
@@ -88,6 +92,16 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("main") {
                         MainScreen(navController, authViewModel)
+                    }
+                    composable("library") {
+                        val libraryViewModel: LibraryViewModel = viewModel()
+                        val authState by authViewModel.uiState.collectAsState()
+                        LaunchedEffect(authState.spotifyAuthData) {
+                            authState.spotifyAuthData?.let {
+                                libraryViewModel.getPlaylists(it.accessToken, it.refreshToken)
+                            }
+                        }
+                        LibraryScreen(libraryViewModel)
                     }
                     composable("map") {
                         // MapScreen()

@@ -1,8 +1,11 @@
 package com.example.sora.auth
 
+import com.example.sora.auth.SupabaseClient.supabase
 import com.example.sora.data.model.Profile
+import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.gotrue.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -119,5 +122,10 @@ class AuthRepository {
         emit(client.auth.currentUserOrNull() != null)
     }
 
-    fun getCurrentUser() = client.auth.currentUserOrNull()
+    fun getCurrentUser(): UserInfo {
+        val session = client.auth.currentSessionOrNull()
+        val user = session?.user ?: throw Exception("No authenticated user found")
+        return user
+    }
+
 }
