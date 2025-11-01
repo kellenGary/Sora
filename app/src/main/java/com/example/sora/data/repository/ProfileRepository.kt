@@ -13,7 +13,7 @@ class ProfileRepository {
 
     @OptIn(kotlinx.serialization.InternalSerializationApi::class)
     suspend fun getProfile(id: String): Profile? {
-        return client.postgrest["profiles"]
+        return client.postgrest["users"]
             .select { filter { eq("id", id) } }
             .decodeSingleOrNull<Profile>()
     }
@@ -30,7 +30,7 @@ class ProfileRepository {
             storage.upload(path, imageFile.readBytes(), upsert = true)
             val newUrl = storage.publicUrl(path)
 
-            client.postgrest["profiles"]
+            client.postgrest["users"]
                 .update({ set("avatar_url", newUrl) }) {
                     filter { eq("id", userId) }
                 }
