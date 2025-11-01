@@ -19,6 +19,8 @@ ktor = "2.3.11"
 coilCompose = "3.2.0"
 coil = "2.4.0"
 coilComposeVersion = "2.4.0"
+mapsCompose = "4.3.3"
+playServicesMaps = "18.2.0"
 
 [libraries]
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
@@ -58,6 +60,8 @@ appauth = { group = "net.openid", name = "appauth", version.ref = "appauth" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coilCompose" }
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilComposeVersion" }
+google-maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

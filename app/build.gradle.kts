@@ -15,6 +15,7 @@ android {
         versionCode = 1
         versionName = "1.0"
         manifestPlaceholders["appAuthRedirectScheme"] = "com.example.sora"
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Add BuildConfig fields for Supabase
@@ -23,6 +24,9 @@ android {
 
         // Add BuildConfig field for Spotify
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"${project.findProperty("SPOTIFY_CLIENT_ID") ?: ""}\"")
+
+        // Add BuildConfig field for Google Maps
+        buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""}\"")
     }
 
     buildTypes {
@@ -76,6 +80,10 @@ dependencies {
 
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
+
+    // Google Maps dependencies
+    implementation(libs.play.services.maps)
+    implementation(libs.google.maps.compose)
 
     // Supabase dependencies
     implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))

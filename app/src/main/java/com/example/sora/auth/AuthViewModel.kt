@@ -3,6 +3,7 @@ package com.example.sora.auth
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.user.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,24 +33,17 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
     private val _uiState = MutableStateFlow(AuthUiState())
     override val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    fun signUp(email: String, password: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+    init {
+        val initialLoggedIn = authRepository.getCurrentUser() != null
+        _uiState.value = AuthUiState(isLoggedIn = initialLoggedIn)
 
-            val spotifyData = _uiState.value.spotifyAuthData
-            authRepository.signUp(email, password, spotifyData)
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        successMessage = "Account created successfully! Please check your email to verify your account."
-                    )
-                }
-                .onFailure { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = exception.message ?: "Sign up failed"
-                    )
-                }
+        viewModelScope.launch {
+            authRepository.observeAuthState().collect { status ->
+                _uiState.value = _uiState.value.copy(
+                    isLoggedIn = status is SessionStatus.Authenticated,
+                    isLoading = false
+                )
+            }
         }
     }
 
@@ -114,6 +108,10 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
         _uiState.value = _uiState.value.copy(errorMessage = message)
     }
 
+    fun setSpotifyLoading(isLoading: Boolean) {
+        _uiState.value = _uiState.value.copy(isLoading = isLoading)
+    }
+
     fun refreshSpotifyStatus(user: UserInfo?) {
         val spotifyData = SpotifyCredentialsManager.getSpotifyCredentials(user)
         val isConnected = SpotifyCredentialsManager.isSpotifyConnected(user)
@@ -126,39 +124,108 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
 
     override fun handleSpotifyAuthResult(accessToken: String, refreshToken: String, expiresIn: Long) {
         Log.d(TAG, "==================== SPOTIFY AUTH RESULT ====================")
-        Log.d(TAG, "Received in AuthViewModel:")
-        Log.d(TAG, "  Access Token Length: ${accessToken.length}")
-        Log.d(TAG, "  Access Token (first 30 chars): ${accessToken.take(30)}...")
-        Log.d(TAG, "  Refresh Token Length: ${refreshToken.length}")
-        Log.d(TAG, "  Refresh Token (first 30 chars): ${refreshToken.take(30)}...")
-        Log.d(TAG, "  Expires In: $expiresIn")
-        
+        Log.d(TAG, "Received tokens - creating/logging in Supabase user")
+
         val spotifyData = SpotifyAuthData(accessToken, refreshToken, expiresIn)
-        
-        Log.d(TAG, "Creating SpotifyAuthData object...")
-        Log.d(TAG, "SpotifyAuthData created: $spotifyData")
-        
+
         _uiState.value = _uiState.value.copy(
             spotifyAuthData = spotifyData,
             isSpotifyConnected = true,
-            successMessage = "Spotify connected successfully!"
+            isLoading = true
         )
 
         viewModelScope.launch {
-            val result = authRepository.updateSpotifyCredentials(spotifyData)
-            result.onSuccess {
-                Log.d(TAG, "Spotify credentials persisted to Supabase")
-            }.onFailure { e ->
-                Log.e(TAG, "Failed to save Spotify credentials: ${e.message}")
+            try {
+                // Fetch Spotify user profile
+                Log.d(TAG, "Fetching Spotify user profile...")
+                val spotifyUser = fetchSpotifyUserProfile(accessToken)
+
+                if (spotifyUser != null) {
+                    Log.d(TAG, "Spotify user: ${spotifyUser.displayName} (${spotifyUser.email})")
+
+                    // Create or login to Supabase
+                    val result = authRepository.signInOrCreateUserWithSpotify(
+                        spotifyUser.email,
+                        spotifyUser.id,
+                        spotifyUser.displayName,
+                        spotifyData
+                    )
+
+                    result.onSuccess {
+                        Log.d(TAG, "User logged in successfully")
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            isLoggedIn = true,
+                            successMessage = "Logged in with Spotify!"
+                        )
+                    }.onFailure { e ->
+                        Log.e(TAG, "Failed to login: ${e.message}")
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Login failed: ${e.message}"
+                        )
+                    }
+                } else {
+                    Log.e(TAG, "Failed to fetch Spotify profile")
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "Failed to fetch Spotify profile"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception: ${e.message}")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Login failed: ${e.message}"
+                )
             }
         }
-        
-        Log.d(TAG, "UI State updated:")
-        Log.d(TAG, "  isSpotifyConnected: ${_uiState.value.isSpotifyConnected}")
-        Log.d(TAG, "  spotifyAuthData present: ${_uiState.value.spotifyAuthData != null}")
-        Log.d(TAG, "  successMessage: ${_uiState.value.successMessage}")
+
         Log.d(TAG, "=============================================================")
     }
+
+    private suspend fun fetchSpotifyUserProfile(accessToken: String): SpotifyUserProfile? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val url = "https://api.spotify.com/v1/me"
+            val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.setRequestProperty("Authorization", "Bearer $accessToken")
+            connection.connect()
+
+            if (connection.responseCode == 200) {
+                val response = connection.inputStream.bufferedReader().readText()
+                Log.d(TAG, "Spotify profile response: $response")
+
+                // Parse JSON manually
+                val emailMatch = Regex(""""email"\s*:\s*"([^"]+)"""").find(response)
+                val displayNameMatch = Regex(""""display_name"\s*:\s*"([^"]+)"""").find(response)
+                val idMatch = Regex(""""id"\s*:\s*"([^"]+)"""").find(response)
+
+                val email = emailMatch?.groupValues?.get(1)
+                val displayName = displayNameMatch?.groupValues?.get(1)
+                val id = idMatch?.groupValues?.get(1)
+
+                if (email != null && displayName != null && id != null) {
+                    SpotifyUserProfile(id, email, displayName)
+                } else {
+                    Log.e(TAG, "Failed to parse Spotify profile")
+                    null
+                }
+            } else {
+                Log.e(TAG, "Spotify API error: ${connection.responseCode}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching Spotify profile: ${e.message}")
+            null
+        }
+    }
+
+    data class SpotifyUserProfile(
+        val id: String,
+        val email: String,
+        val displayName: String
+    )
 
     fun clearSpotifyAuth() {
         Log.d(TAG, "Clearing Spotify authentication")
