@@ -12,7 +12,12 @@ object SupabaseClient {
         supabaseUrl = BuildConfig.SUPABASE_URL,
         supabaseKey = BuildConfig.SUPABASE_ANON_KEY
     ) {
-        install(Auth)
+        install(Auth) {
+            // Configure OAuth providers
+            // This enables deep link handling for OAuth callbacks
+            scheme = "com.example.sora"
+            host = "callback"
+        }
         install(Postgrest)
         install(Storage)
         //install other modules
@@ -21,5 +26,6 @@ object SupabaseClient {
     init {
         Log.d("SupabaseClient", "Initializing with URL: ${BuildConfig.SUPABASE_URL}")
         Log.d("SupabaseClient", "Key starts with: ${BuildConfig.SUPABASE_ANON_KEY.take(10)}...")
+        Log.d("SupabaseClient", "OAuth redirect configured: com.example.sora://callback")
     }
 }

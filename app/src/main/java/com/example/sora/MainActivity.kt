@@ -21,8 +21,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
-import com.example.sora.auth.Signup
 import com.example.sora.features.SpotifyAuthManager
+import com.example.sora.map.MapScreen
 import com.example.sora.ui.BottomNavBar
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
@@ -83,14 +83,11 @@ class MainActivity : ComponentActivity() {
                     composable("login") {
                         Login(navController, authViewModel)
                     }
-                    composable("signup") {
-                        Signup(navController, authViewModel)
-                    }
                     composable("main") {
                         MainScreen(navController, authViewModel)
                     }
                     composable("map") {
-                        // MapScreen()
+                         MapScreen(navController, authViewModel)
                     }
                     composable("friends") {
                         // FriendsScreen()
@@ -139,7 +136,9 @@ class MainActivity : ComponentActivity() {
     private fun handleSpotifyCallback(intent: Intent?, authViewModel: AuthViewModel) {
         intent?.data?.let { uri ->
             if (uri.scheme == "com.example.sora" && uri.host == "callback") {
-                Log.d(TAG, "Valid Spotify callback detected, processing...")
+                Log.d(TAG, "Valid Spotify callback detected")
+                Log.d(TAG, "Full URI: $uri")
+
                 val authResponse = SpotifyAuthManager.handleAuthorizationResponse(intent)
                 authResponse?.let { response ->
                     Log.d(TAG, "Valid auth response received, starting token exchange...")
@@ -167,7 +166,7 @@ class MainActivity : ComponentActivity() {
                     Log.w(TAG, "No valid auth response from handleAuthorizationResponse")
                 }
             } else {
-                Log.w(TAG, "URI scheme/host mismatch - Expected: com.example.sora://callback")
+                Log.w(TAG, "URI scheme/host mismatch - Expected: com.example.sora://callback, got: ${uri.scheme}://${uri.host}")
             }
         }
     }
