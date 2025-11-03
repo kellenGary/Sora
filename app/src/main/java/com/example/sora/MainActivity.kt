@@ -6,11 +6,15 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -23,6 +27,9 @@ import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.map.MapScreen
+import com.example.sora.playback.PlaybackViewModel
+import com.example.sora.playback.ui.ExpandedPlayer
+import com.example.sora.playback.ui.MiniPlayer
 import com.example.sora.ui.BottomNavBar
 import com.example.sora.ui.MainScreen
 import com.example.sora.ui.ProfileScreen
@@ -39,6 +46,7 @@ private const val TAG = "MainActivity"
 class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
     private lateinit var profileViewModel: ProfileViewModel
+    private lateinit var playbackViewModel: PlaybackViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,31 +56,24 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            val navController = rememberNavController()
-            authViewModel = viewModel()
-            profileViewModel = viewModel()
+            com.example.sora.ui.theme.SoraTheme {
+                val navController = rememberNavController()
+                authViewModel = viewModel()
+                profileViewModel = viewModel()
+                playbackViewModel = viewModel()
 
             // Handle Spotify callback intent
             LaunchedEffect(intent) {
                 handleSpotifyCallback(intent, authViewModel)
             }
 
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                bottomBar = {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-                    if (currentRoute != null && (
-                                currentRoute.startsWith("main") ||
-                                        currentRoute.startsWith("map") ||
-                                        currentRoute.startsWith("friends") ||
-                                        currentRoute.startsWith("settings") ||
-                                        currentRoute.startsWith("profile")
-                                )) {
-                        BottomNavBar(navController)
-                    }
-                }
-            ) { innerPadding ->
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            
+            Box(modifier = Modifier.fillMaxSize()) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
                 NavHost(
                     navController = navController,
                     startDestination = "login",
@@ -101,6 +102,9 @@ class MainActivity : ComponentActivity() {
                     composable("linked_accounts") {
                         LinkedAccountScreen(navController, authViewModel)
                     }
+                    composable("player") {
+                        ExpandedPlayer(navController, playbackViewModel)
+                    }
                     composable(
                         route="profile/{userId}",
                         arguments = listOf(navArgument("userId") { type =
@@ -115,6 +119,33 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+            
+            // Fixed bottom container with mini player and navbar
+            // Show on main screens, hide on login and expanded player
+            if (currentRoute != null && (
+                        currentRoute.startsWith("main") ||
+                                currentRoute.startsWith("map") ||
+                                currentRoute.startsWith("friends") ||
+                                currentRoute.startsWith("settings") ||
+                                currentRoute.startsWith("profile")
+                        )) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                ) {
+                    // Mini player above navbar
+                    MiniPlayer(
+                        playbackViewModel = playbackViewModel,
+                        onExpand = { navController.navigate("player") }
+                    )
+                    
+                    // Bottom navigation bar
+                    BottomNavBar(navController)
+                }
+            }
+        } // Box
+            } // SoraTheme
         }
     }
 
