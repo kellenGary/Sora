@@ -84,6 +84,7 @@ dependencies {
     // Google Maps dependencies
     implementation(libs.play.services.maps)
     implementation(libs.google.maps.compose)
+    implementation(libs.play.services.location)
 
     // Supabase dependencies
     implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
