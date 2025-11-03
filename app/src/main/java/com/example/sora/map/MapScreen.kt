@@ -92,8 +92,8 @@ fun MapScreen(
     val uiSettings by remember {
         mutableStateOf(
             MapUiSettings(
-                zoomControlsEnabled = true,
-                zoomGesturesEnabled = true,
+                zoomControlsEnabled = false,
+                zoomGesturesEnabled = false,
                 scrollGesturesEnabled = true,
                 tiltGesturesEnabled = true,
                 rotationGesturesEnabled = true,
@@ -227,10 +227,12 @@ fun SongDetailsPopup(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(start = 12.dp, end = 12.dp, bottom = 132.dp) // Position above navbar + mini player
                 .clickable(enabled = false) { }, // Prevent click propagation to background
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
             Column(
                 modifier = Modifier
@@ -283,11 +285,6 @@ fun SongDetailsPopup(
                         Text(
                             text = song.artist,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatRadius(song.radiusMeters),
-                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

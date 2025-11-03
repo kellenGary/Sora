@@ -38,7 +38,10 @@ object SpotifyAuthManager {
     private val scopes = arrayOf(
         "user-read-private",
         "user-read-email",
-        "playlist-read-private"
+        "playlist-read-private",
+        "user-read-playback-state",
+        "user-modify-playback-state",
+        "user-read-currently-playing"
     )
     
     // Store the last authorization request to retrieve the code_verifier
