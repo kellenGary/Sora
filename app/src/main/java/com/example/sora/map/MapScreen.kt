@@ -65,23 +65,14 @@ fun MapScreen(
         }
     }
 
-    // Camera position state - start with a default, will animate to user location
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 2f) // World view initially
-    }
-
-    // Move camera to user location when first available
-    var hasMovedToLocation by remember { mutableStateOf(false) }
+    // Camera position state - update instantly to user location (no animation)
+    val cameraPositionState = rememberCameraPositionState()
+    
+    // Update camera position instantly when user location changes
     LaunchedEffect(locationState.currentLocation) {
         locationState.currentLocation?.let { location ->
-            if (!hasMovedToLocation) {
-                println("MapScreen: First location received, moving camera to: $location")
-                cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(location, 13f), // Zoom level 13 shows ~5km radius well
-                    1500 // Animation duration in milliseconds
-                )
-                hasMovedToLocation = true
-            }
+            println("MapScreen: Setting camera position to: $location")
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 13f)
         }
     }
 

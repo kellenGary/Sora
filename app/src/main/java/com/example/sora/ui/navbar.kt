@@ -1,10 +1,12 @@
 package com.example.sora.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import com.example.sora.R
@@ -14,7 +16,8 @@ fun BottomNavBar(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding(),
+            .navigationBarsPadding()
+            .background(Color.White),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(

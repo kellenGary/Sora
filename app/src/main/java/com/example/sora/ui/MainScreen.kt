@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.sora.auth.AuthRepository
 import com.example.sora.auth.IAuthViewModel
+import com.example.sora.map.MiniMapScreen
 import com.example.sora.utils.FakeAuthViewModel
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -41,6 +42,7 @@ fun MainScreen(
             text = "Welcome to Sora!",
             style = MaterialTheme.typography.headlineMedium
         )
+        MiniMapScreen(navController = navController)
 
         Button(
             onClick = {

@@ -2,4 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Splash Screen Colors - Matching Login Screen -->
+    <color name="splash_background">#020618</color> <!-- Primary color - Dark Blue -->
+    <color name="splash_icon_background">#00FFFFFF</color> <!-- Transparent -->
 </resources>

@@ -39,7 +39,7 @@ fun ExpandedPlayer(
     // Background gradient colors from album art (simplified - could be extracted from image)
     val backgroundColor = MaterialTheme.colorScheme.background
     val gradientColors = listOf(
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
         backgroundColor,
         backgroundColor
     )
@@ -49,42 +49,43 @@ fun ExpandedPlayer(
             .fillMaxSize()
             .background(Brush.verticalGradient(gradientColors))
     ) {
-        Column(
+        // Top bar with back button - positioned at the top
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Top bar with back button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Close",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-                
-                Text(
-                    text = "Now Playing",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Close",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.size(32.dp)
                 )
-                
-                // Placeholder for symmetry
-                Spacer(modifier = Modifier.size(48.dp))
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Now Playing",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             
+            // Placeholder for symmetry
+            Spacer(modifier = Modifier.size(48.dp))
+        }
+        
+        // Centered content
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center)
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             // Album art - responsive size
             uiState.track?.album?.images?.firstOrNull()?.url?.let { imageUrl ->
                 AsyncImage(
@@ -167,8 +168,16 @@ fun ExpandedPlayer(
                 onSkipNextClick = { playbackViewModel.skipToNext() }
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
+        }
+        
+        // Bottom area for error messages
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             // Error message
             uiState.error?.let { error ->
                 Text(
@@ -185,8 +194,7 @@ fun ExpandedPlayer(
                     text = "No active device. Start playback on Spotify to control it here.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
+                    textAlign = TextAlign.Center
                 )
             }
         }
