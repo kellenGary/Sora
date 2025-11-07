@@ -26,6 +26,7 @@ import androidx.navigation.navArgument
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.features.SpotifyAuthManager
+import com.example.sora.friends.FriendScreen
 import com.example.sora.map.MapScreen
 import com.example.sora.playback.PlaybackViewModel
 import com.example.sora.playback.ui.ExpandedPlayer
@@ -88,10 +89,10 @@ class MainActivity : ComponentActivity() {
                         MainScreen(navController, authViewModel)
                     }
                     composable("map") {
-                         MapScreen(navController, authViewModel)
+                         MapScreen(navController)
                     }
                     composable("friends") {
-                        // FriendsScreen()
+                        FriendScreen(navController)
                     }
                     composable("settings") {
                         SettingScreen(navController)
