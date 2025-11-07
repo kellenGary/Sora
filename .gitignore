@@ -1,16 +1,31 @@
+# Kotlin/Java/Android
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.gradle/
+build/
+/captures/
+.externalNativeBuild/
+.idea/
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
 local.properties
-gradle.properties
+.gradle
+# Ignore Gradle properties
+**/gradle.properties
+# Ignore build outputs
+**/build/
+# Ignore generated files
+**/out/
+# Ignore log files
+*.log
+# Ignore OS files
+Thumbs.db
+# Ignore other IDE files
+*.ipr
+*.iws
+*.swp
+*.swo
+# Ignore crash logs
+crashlytics-build.properties
+# Ignore APKs
+*.apk
+*.ap_
+
