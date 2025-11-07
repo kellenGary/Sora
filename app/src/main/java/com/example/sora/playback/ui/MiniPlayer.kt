@@ -51,12 +51,12 @@ fun MiniPlayer(
         Card(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp, top = 8.dp)
+                .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)
                 .height(72.dp)
                 .clickable(onClick = onExpand),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.background
             )
         ) {
             Row(

@@ -6,4 +6,16 @@
     </style>
 
     <style name="Theme.Sora" parent="Base.Theme.Sora" />
+    
+    <!-- Splash Activity Theme - No system splash screen -->
+    <style name="Theme.Sora.Splash" parent="Base.Theme.Sora">
+        <!-- Use transparent window background so Compose takes over immediately -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
 </resources>

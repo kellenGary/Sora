@@ -3,13 +3,13 @@ package com.example.sora.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Primary colors
-val Primary = Color(8, 44, 71) // Dark Blue
+val Primary = Color(2, 6, 24) // Dark Blue
 val OnPrimary = Color(0xFFFFFFFF)
 val PrimaryContainer = Color(0xFF1ED760)
 val OnPrimaryContainer = Color(0xFF000000)
 
 // Secondary colors
-val Secondary = Color(0xFF535353)
+val Secondary = Color(15, 23, 43)
 val OnSecondary = Color(0xFFFFFFFF)
 val SecondaryContainer = Color(0xFF757575)
 val OnSecondaryContainer = Color(0xFFFFFFFF)
