@@ -3,7 +3,6 @@ package com.example.sora.map
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,8 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,12 +29,10 @@ import com.example.sora.auth.AuthViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.launch
 
 @Composable
 fun MapScreen(
-    navController: NavController,
-    authViewModel: AuthViewModel = viewModel(),
+    navController: NavController? = null,
     mapViewModel: MapViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -178,7 +175,7 @@ fun MapScreen(
                 onDismiss = { selectedSong = null },
                 onViewSong = {
                     // Navigate to song details
-                    navController.navigate("song/${song.id}")
+                    navController?.navigate("song/${song.id}")
                     selectedSong = null
                 }
             )
