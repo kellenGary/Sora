@@ -68,6 +68,9 @@ dependencies {
     implementation(libs.appauth)
     implementation(libs.androidx.navigation.compose)
 
+    // Splash Screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
     // Compose dependencies
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom)) // Import the BOM
