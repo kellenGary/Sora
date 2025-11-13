@@ -24,6 +24,8 @@ android {
 
         // Add BuildConfig field for Spotify
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"${project.findProperty("SPOTIFY_CLIENT_ID") ?: ""}\"")
+        buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"${project.findProperty("SPOTIFY_CLIENT_SECRET") ?: ""}\"")
+
 
         // Add BuildConfig field for Google Maps
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""}\"")
@@ -99,6 +101,11 @@ dependencies {
     implementation("io.ktor:ktor-client-android:2.3.11")
     implementation(libs.coil.kt.coil.compose)
 
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
+    // If you don't have these already:
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation(libs.androidx.benchmark.traceprocessor)
     // Tooling for previews and debugging
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

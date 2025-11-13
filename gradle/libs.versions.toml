@@ -22,6 +22,7 @@ coilComposeVersion = "2.4.0"
 mapsCompose = "4.3.3"
 playServicesMaps = "18.2.0"
 playServicesLocation = "21.3.0"
+benchmarkTraceprocessor = "1.4.1"
 
 [libraries]
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
@@ -64,6 +65,7 @@ coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.re
 google-maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-benchmark-traceprocessor = { group = "androidx.benchmark", name = "benchmark-traceprocessor", version.ref = "benchmarkTraceprocessor" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

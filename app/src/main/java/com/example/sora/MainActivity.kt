@@ -23,10 +23,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.sora.library.main.LibraryScreen
 import com.example.sora.auth.AuthViewModel
 import com.example.sora.auth.Login
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.friends.FriendScreen
+import com.example.sora.library.playlists.PlaylistScreen
 import com.example.sora.map.MapScreen
 import com.example.sora.playback.PlaybackViewModel
 import com.example.sora.playback.ui.ExpandedPlayer
@@ -91,6 +93,22 @@ class MainActivity : ComponentActivity() {
                     composable("map") {
                          MapScreen(navController)
                     }
+                    composable("library") {
+                        LibraryScreen(navController)
+                    }
+                    composable("playlist",
+                        arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
+                    ) {
+                        val playlistId = it.arguments?.getString("playlistId")
+                        PlaylistScreen(navController, playlistId = playlistId)
+                    }
+                    composable(
+                        route = "playlist/{playlistId}",
+                        arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val playlistId = backStackEntry.arguments?.getString("playlistId")
+                        PlaylistScreen(navController, playlistId = playlistId )
+                    }
                     composable("friends") {
                         FriendScreen(navController)
                     }
@@ -128,7 +146,8 @@ class MainActivity : ComponentActivity() {
                                 currentRoute.startsWith("map") ||
                                 currentRoute.startsWith("friends") ||
                                 currentRoute.startsWith("settings") ||
-                                currentRoute.startsWith("profile")
+                                currentRoute.startsWith("profile") ||
+                                currentRoute.startsWith("library")
                         )) {
                 Column(
                     modifier = Modifier

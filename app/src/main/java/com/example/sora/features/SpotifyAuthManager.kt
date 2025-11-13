@@ -84,6 +84,7 @@ object SpotifyAuthManager {
 
         // Create token exchange request without client secret (using PKCE only)
         val tokenRequest = authResponse.createTokenExchangeRequest()
+        println("Token request: $tokenRequest")
 
         Log.d(TAG, "Making token request to: ${tokenRequest.configuration.tokenEndpoint}")
 
