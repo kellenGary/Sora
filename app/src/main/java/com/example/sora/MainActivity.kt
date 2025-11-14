@@ -132,7 +132,6 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("userId") { type =
                             NavType.StringType })
                     ) {  backStackEntry ->
-                        // TODO: Shouldnt fail this next userID
                         ProfileScreen(
                             profileViewModel = profileViewModel
                         )
