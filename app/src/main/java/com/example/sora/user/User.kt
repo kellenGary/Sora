@@ -1,11 +1,10 @@
-package com.example.sora.data.model
+package com.example.sora.user
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
 @Serializable
-data class Profile(
+data class User(
     val id: String,
 
     @SerialName("display_name") val displayName: String? = null,
