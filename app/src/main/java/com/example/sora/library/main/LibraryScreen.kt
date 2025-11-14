@@ -117,11 +117,6 @@ fun PlaylistItem(playlist: PlaylistItem, modifier: Modifier = Modifier) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun LibraryScreenPreview() {
-    LibraryScreen(libraryViewModel = LibraryViewModel())
-}
 
 // Preview for a single playlist item
 @Preview(showBackground = true)

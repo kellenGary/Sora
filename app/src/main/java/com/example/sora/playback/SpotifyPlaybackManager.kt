@@ -29,17 +29,20 @@ object SpotifyPlaybackManager {
 
     /**
      * Get the user's current playback state
+     * Always runs on IO dispatcher to prevent blocking main thread
      */
     suspend fun getCurrentPlayback(accessToken: String): Result<SpotifyPlaybackState?> = withContext(Dispatchers.IO) {
         try {
+            // Network call guaranteed to be on IO thread
             val response: HttpResponse = client.get("$BASE_URL/me/player") {
                 header("Authorization", "Bearer $accessToken")
-            }
+            } 
 
             when (response.status) {
                 HttpStatusCode.OK -> {
+                    // JSON parsing also happens on IO thread
                     val playbackState = json.decodeFromString<SpotifyPlaybackState>(response.bodyAsText())
-                    Log.d(TAG, "Current playback: ${playbackState.item?.name}")
+                    Log.d(TAG, "Current playback: ${playbackState}")
                     Result.success(playbackState)
                 }
                 HttpStatusCode.NoContent -> {
@@ -90,6 +93,7 @@ object SpotifyPlaybackManager {
 
     /**
      * Resume playback
+     * Always runs on IO dispatcher to prevent blocking main thread
      */
     suspend fun resume(accessToken: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -112,6 +116,7 @@ object SpotifyPlaybackManager {
 
     /**
      * Pause playback
+     * Always runs on IO dispatcher to prevent blocking main thread
      */
     suspend fun pause(accessToken: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -134,6 +139,7 @@ object SpotifyPlaybackManager {
 
     /**
      * Skip to next track
+     * Always runs on IO dispatcher to prevent blocking main thread
      */
     suspend fun skipToNext(accessToken: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -156,6 +162,7 @@ object SpotifyPlaybackManager {
 
     /**
      * Skip to previous track
+     * Always runs on IO dispatcher to prevent blocking main thread
      */
     suspend fun skipToPrevious(accessToken: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -178,6 +185,7 @@ object SpotifyPlaybackManager {
 
     /**
      * Seek to position in currently playing track
+     * Always runs on IO dispatcher to prevent blocking main thread
      * @param positionMs Position in milliseconds
      */
     suspend fun seekToPosition(accessToken: String, positionMs: Long): Result<Unit> = withContext(Dispatchers.IO) {
