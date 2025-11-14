@@ -7,21 +7,27 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.sora.viewmodel.UserUi
 
 @Composable
-fun UserRow(user: User, onFollowClick: () -> Unit) {
+fun UserRow(user: UserUi, onFollowClick: () -> Unit) {
     Row(
         modifier = Modifier
             .padding(12.dp)
@@ -30,28 +36,33 @@ fun UserRow(user: User, onFollowClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         AsyncImage(
-            model = user.profileImageUrl,
-            contentDescription = "Profile picture of ${user.name}",
+            model = user.avatarUrl,
+            contentDescription = "Profile picture of ${user.displayName}",
             modifier = Modifier
-                .background(Color.LightGray, RoundedCornerShape(50))
-                .height(48.dp)
-                .width(48.dp)
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(Color.LightGray)
         )
+
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = user.name,
-                fontWeight = FontWeight.W600,
-                fontSize = 15.sp
-            )
-            Text(
-                text = user.handle,
-                fontWeight = FontWeight.W400,
-                fontSize = 13.sp,
-                color = Color.Gray
-            )
-            if (user.mutualFriends.isNotEmpty()) {
-                MutualFriendsRow(user.mutualFriends)
+            user.displayName?.let {
+                Text(
+                    text = it,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 15.sp
+                )
             }
+            // No support of handles currently 11/14
+//            Text(
+//                text = user.handle,
+//                fontWeight = FontWeight.W400,
+//                fontSize = 13.sp,
+//                color = Color.Gray
+//            )
+            // No support of mutual friends currently 11/14
+//            if (user.mutualFriends.isNotEmpty()) {
+//                MutualFriendsRow(user.mutualFriends)
+//            }
         }
         Button(
             onClick = onFollowClick,

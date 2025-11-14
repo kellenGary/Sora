@@ -10,6 +10,11 @@ import java.io.File
 class UserRepository {
     private val client = SupabaseClient.supabase
 
+    suspend fun getAllUsers(): List<User> {
+        return client.postgrest["users"]
+            .select()
+            .decodeList<User>()
+    }
     @OptIn(kotlinx.serialization.InternalSerializationApi::class)
     suspend fun getUser(id: String): User? {
         return client.postgrest["users"]
