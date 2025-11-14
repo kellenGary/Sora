@@ -1,8 +1,9 @@
 package com.example.sora.library.playlists
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sora.auth.AuthRepository
+import com.example.sora.auth.SpotifyTokenRefresher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,9 +16,8 @@ data class PlaylistDetailsUiState(
     val error: String? = null
 )
 
-class PlaylistViewModel : ViewModel() {
+class PlaylistViewModel(application: Application) : AndroidViewModel(application) {
     private val spotifyService = SpotifyPlaylistManager()
-    private val authRepository = AuthRepository()
 
 
     private val _uiState = MutableStateFlow(PlaylistDetailsUiState())
@@ -32,7 +32,16 @@ class PlaylistViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             try {
-                val accessToken = authRepository.getSpotifyAccessToken()
+                // Get valid token (auto-refreshes if expired)
+                val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication())
+                if (accessToken == null) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Not connected to Spotify",
+                        isLoading = false
+                    )
+                    return@launch
+                }
+                
                 val playlistDetails = spotifyService.getPlaylistDetails(accessToken, playlistId)
 
                 _uiState.value = _uiState.value.copy(
@@ -41,36 +50,11 @@ class PlaylistViewModel : ViewModel() {
                     error = null
                 )
             } catch (e: Exception) {
-                val errorMsg = e.message ?: "Unknown error"
-                println("Failed to load playlist details: $errorMsg")
-
-                // Handle expired token case
-                if (errorMsg.contains("expired", ignoreCase = true) ||
-                    errorMsg.contains("401", ignoreCase = true)
-                ) {
-                    try {
-                        println("Refreshing Spotify token…")
-                        val newAccessToken = authRepository.getSpotifyAccessToken()
-                        val refreshedDetails = spotifyService.getPlaylistDetails(newAccessToken, playlistId)
-
-                        _uiState.value = _uiState.value.copy(
-                            playlist = refreshedDetails,
-                            isLoading = false,
-                            error = null
-                        )
-                    } catch (refreshError: Exception) {
-                        println("Token refresh failed: ${refreshError.message}")
-                        _uiState.value = _uiState.value.copy(
-                            error = "Session expired. Please reconnect Spotify.",
-                            isLoading = false
-                        )
-                    }
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        error = errorMsg,
-                        isLoading = false
-                    )
-                }
+                println("Failed to load playlist details: ${e.message}")
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Failed to load playlist",
+                    isLoading = false
+                )
             }
         }
     }

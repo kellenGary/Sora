@@ -1,5 +1,6 @@
 package com.example.sora.auth
 
+import android.content.Context
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
@@ -10,7 +11,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import android.util.Log
 
-class AuthRepository {
+class AuthRepository(private val context: Context? = null) {
     private val client = SupabaseClient.supabase
 
     @Deprecated("Use signInOrSignUpWithSpotify instead - Spotify OAuth handles user creation")
@@ -98,7 +99,7 @@ class AuthRepository {
             // Use Spotify email to create a unique, deterministic account
             // Password is based on Spotify ID so returning users can login
             val password = "spotify_${spotifyId}_auto_generated_password"
-
+            
             // Try to sign in first (for returning users)
             val signInResult = try {
                 client.auth.signInWith(Email) {
@@ -135,6 +136,26 @@ class AuthRepository {
                 Log.d("AuthRepository", "New user created with metadata")
             }
 
+            // Save to local storage after authentication (with correct Supabase user ID)
+            val supabaseUserId = client.auth.currentUserOrNull()?.id
+            if (supabaseUserId != null) {
+                context?.let {
+                    val tokenManager = SpotifyTokenManager.getInstance(it)
+                    tokenManager.saveTokens(
+                        accessToken = spotifyData.accessToken,
+                        refreshToken = spotifyData.refreshToken,
+                        expiresIn = spotifyData.expiresIn,
+                        userEmail = spotifyEmail,
+                        userId = supabaseUserId, // Use Supabase user ID, not Spotify ID
+                        supabasePassword = password
+                    )
+                    Log.d("AuthRepository", "Tokens saved to local storage with Supabase user ID: $supabaseUserId")
+                }
+            } else {
+                Log.e("AuthRepository", "Failed to get Supabase user ID after authentication")
+                return Result.failure(Exception("Failed to get user ID after authentication"))
+            }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e("AuthRepository", "Failed to sign in/create user: ${e.message}")
@@ -146,7 +167,7 @@ class AuthRepository {
         return try {
             val user = client.auth.currentUserOrNull()
             if (user != null) {
-                // Preserve existing metadata and update Spotify tokens
+                // Preserve existing metadata and update Spotify tokens in Supabase
                 val currentMetadata = user.userMetadata?.jsonObject ?: buildJsonObject {}
 
                 client.auth.updateUser {
@@ -164,6 +185,22 @@ class AuthRepository {
                         put("spotify_expires_in", spotifyData.expiresIn)
                     }
                 }
+                
+                // Save to local storage after updating Supabase (with correct Supabase user ID)
+                context?.let {
+                    val tokenManager = SpotifyTokenManager.getInstance(it)
+                    val existingPassword = tokenManager.getSupabasePassword()
+                    tokenManager.saveTokens(
+                        accessToken = spotifyData.accessToken,
+                        refreshToken = spotifyData.refreshToken,
+                        expiresIn = spotifyData.expiresIn,
+                        userEmail = user.email,
+                        userId = user.id, // Use Supabase user ID
+                        supabasePassword = existingPassword
+                    )
+                    Log.d("AuthRepository", "Tokens saved to local storage with Supabase user ID: ${user.id}")
+                }
+                
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("No authenticated user found"))
@@ -199,10 +236,30 @@ class AuthRepository {
     }
 
     fun getSpotifyAccessToken(): String? {
+        // Try local storage first (works in background)
+        context?.let {
+            val tokenManager = SpotifyTokenManager.getInstance(it)
+            val localToken = tokenManager.getAccessToken()
+            if (localToken != null) {
+                return localToken
+            }
+        }
+        
+        // Fallback to Supabase metadata
         return client.auth.currentUserOrNull()?.userMetadata?.get("spotify_access_token")?.toString()?.trim('"')
     }
 
     fun getSpotifyRefreshToken(): String? {
+        // Try local storage first (works in background)
+        context?.let {
+            val tokenManager = SpotifyTokenManager.getInstance(it)
+            val localToken = tokenManager.getRefreshToken()
+            if (localToken != null) {
+                return localToken
+            }
+        }
+        
+        // Fallback to Supabase metadata
         return client.auth.currentUserOrNull()?.userMetadata?.get("spotify_refresh_token")?.toString()?.trim('"')
     }
 }
