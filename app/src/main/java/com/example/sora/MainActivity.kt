@@ -133,9 +133,7 @@ class MainActivity : ComponentActivity() {
                             NavType.StringType })
                     ) {  backStackEntry ->
                         // TODO: Shouldnt fail this next userID
-                        val userId = backStackEntry.arguments?.getString("userId") ?: "user"
                         ProfileScreen(
-                            userId = userId,
                             profileViewModel = profileViewModel
                         )
                     }

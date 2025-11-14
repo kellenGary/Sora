@@ -17,6 +17,7 @@ import java.io.File
 data class ProfileUiState(
     val displayName: String? = null,
     val avatarUrl: String? = null,
+    val isPersonalProfile: Boolean = false,
     val uniqueSongs: Int = 0,
     val listeningHistory: List<Song> = emptyList(),
     val likedSongs: List<Song> = emptyList()
@@ -65,12 +66,15 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
     override fun loadProfile(userId: String?) {
         viewModelScope.launch {
+            val currentUserId = authRepository.getCurrentUser()?.id
             val idToLoad = userId ?: authRepository.getCurrentUser()?.id
+
             if (idToLoad != null) {
                 val profile = userRepository.getUser(idToLoad)
                 _uiState.value = _uiState.value.copy(
                     displayName = profile?.displayName ?: "User",
-                    avatarUrl = profile?.avatarUrl
+                    avatarUrl = profile?.avatarUrl,
+                    isPersonalProfile = (currentUserId == idToLoad),
                     // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
                 )
                 Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")

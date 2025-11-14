@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.Button
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
@@ -49,7 +50,6 @@ private const val TAG = "ProfileScreen"
  */
 @Composable
 fun ProfileScreen(
-    userId: String,
     profileViewModel: IProfileViewModel,
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
@@ -73,6 +73,17 @@ fun ProfileScreen(
         }
     )
 
+    val onPfpClickHandler = if (uiState.isPersonalProfile) {
+        Modifier.clickable { photoPickerLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        ) }
+    } else {
+        Modifier
+    }
+
+
+
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -83,12 +94,9 @@ fun ProfileScreen(
             ProfileHeader(
                 username = uiState.displayName ?: "User",
                 pfpUrl = uiState.avatarUrl,
-                onPfpClick = {
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                },
-                subHeadingText = "${uiState.uniqueSongs} unique songs played"
+                modifier = onPfpClickHandler,
+                subHeadingText = "${uiState.uniqueSongs} unique songs played",
+                isPersonalProfile = uiState.isPersonalProfile
             )
         }
 
@@ -117,8 +125,9 @@ fun ProfileScreen(
 fun ProfileHeader(
     username: String,
     pfpUrl: Any?,
-    onPfpClick: () -> Unit,
-    subHeadingText: String
+    modifier: Modifier,
+    subHeadingText: String,
+    isPersonalProfile: Boolean,
 ) {
     Row(
         modifier = Modifier
@@ -136,7 +145,7 @@ fun ProfileHeader(
                 .size(100.dp)
                 .clip(CircleShape)
                 .background(Color.LightGray)
-                .clickable { onPfpClick() }
+                .then(modifier)
         )
 
         // Spacer between image and text
@@ -163,6 +172,26 @@ fun ProfileHeader(
                 fontSize = 12.sp,
                 color = Color.Gray
             )
+
+            if (!isPersonalProfile) {
+                Spacer(Modifier.height(8.dp))
+
+                // TODO: Check if following user or not
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color.DarkGray)
+                        //                    .clickable { onFollowClick() }
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "Follow",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.W600
+                    )
+                }
+            }
         }
     }
 }
@@ -314,6 +343,7 @@ fun ProfileScreenPreview() {
                 displayName = "Ricky Bobby",
                 avatarUrl = null,
                 uniqueSongs = 142,
+                isPersonalProfile = false,
                 listeningHistory = fakeHistory,
                 likedSongs = fakeLikes
             )
@@ -330,7 +360,6 @@ fun ProfileScreenPreview() {
 
     // --- Call the screen with the fake ViewModel ---
     ProfileScreen(
-        userId = "12345",
         profileViewModel = fakeViewModel
     )
 }
