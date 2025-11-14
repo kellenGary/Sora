@@ -1,7 +1,7 @@
-package com.example.sora.user
+package com.example.sora.data.repository
 
 import com.example.sora.auth.SupabaseClient
-import com.example.sora.user.User
+import com.example.sora.data.model.User
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
