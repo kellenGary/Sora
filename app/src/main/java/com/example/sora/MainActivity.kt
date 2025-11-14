@@ -29,6 +29,7 @@ import com.example.sora.auth.Login
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.friends.FriendScreen
 import com.example.sora.library.playlists.PlaylistScreen
+import com.example.sora.library.songs.SongScreen
 import com.example.sora.map.MapScreen
 import com.example.sora.playback.PlaybackViewModel
 import com.example.sora.playback.ui.ExpandedPlayer
@@ -96,18 +97,20 @@ class MainActivity : ComponentActivity() {
                     composable("library") {
                         LibraryScreen(navController)
                     }
-                    composable("playlist",
-                        arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
-                    ) {
-                        val playlistId = it.arguments?.getString("playlistId")
-                        PlaylistScreen(navController, playlistId = playlistId)
-                    }
                     composable(
                         route = "playlist/{playlistId}",
                         arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
                     ) { backStackEntry ->
                         val playlistId = backStackEntry.arguments?.getString("playlistId")
                         PlaylistScreen(navController, playlistId = playlistId )
+                    }
+                    composable(
+                        route = "song/{songId}",
+                        arguments = listOf(navArgument("songId"){ type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val songId = backStackEntry.arguments?.getString("songId")
+                        System.out.println(songId)
+                        SongScreen(navController, songId = songId)
                     }
                     composable("friends") {
                         FriendScreen(navController)
