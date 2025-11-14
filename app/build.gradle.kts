@@ -90,6 +90,10 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.google.maps.compose)
     implementation(libs.play.services.location)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    // Security
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Supabase dependencies
     implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
