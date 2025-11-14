@@ -27,22 +27,38 @@ data class AuthUiState(
 
 private const val TAG = "AuthViewModel"
 
-class AuthViewModel : ViewModel(), IAuthViewModel {
-    private val authRepository = AuthRepository()
+class AuthViewModel(application: android.app.Application) : androidx.lifecycle.AndroidViewModel(application), IAuthViewModel {
+    private val authRepository = AuthRepository(application)
 
     private val _uiState = MutableStateFlow(AuthUiState())
     override val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     init {
         val initialLoggedIn = authRepository.getCurrentUser() != null
-        _uiState.value = AuthUiState(isLoggedIn = initialLoggedIn)
+        
+        // Check for stored Spotify tokens
+        val tokenManager = SpotifyTokenManager.getInstance(application)
+        val hasStoredTokens = tokenManager.hasStoredCredentials()
+        
+        Log.d(TAG, "Initializing AuthViewModel - isLoggedIn: $initialLoggedIn, hasStoredTokens: $hasStoredTokens")
+        
+        _uiState.value = AuthUiState(
+            isLoggedIn = initialLoggedIn,
+            isSpotifyConnected = hasStoredTokens && initialLoggedIn
+        )
 
         viewModelScope.launch {
             authRepository.observeAuthState().collect { status ->
+                val isAuthenticated = status is SessionStatus.Authenticated
+                val isSpotifyConnected = tokenManager.hasStoredCredentials() && isAuthenticated
+                
                 _uiState.value = _uiState.value.copy(
-                    isLoggedIn = status is SessionStatus.Authenticated,
+                    isLoggedIn = isAuthenticated,
+                    isSpotifyConnected = isSpotifyConnected,
                     isLoading = false
                 )
+                
+                Log.d(TAG, "Auth state changed - isLoggedIn: $isAuthenticated, isSpotifyConnected: $isSpotifyConnected")
             }
         }
     }
@@ -233,5 +249,18 @@ class AuthViewModel : ViewModel(), IAuthViewModel {
             spotifyAuthData = null,
             isSpotifyConnected = false
         )
+    }
+
+    fun handleLocalTokenRefresh(accessToken: String, refreshToken: String, expiresIn: Long) {
+        Log.d(TAG, "Handling local token refresh - updating UI state")
+        val spotifyData = SpotifyAuthData(accessToken, refreshToken, expiresIn)
+        
+        _uiState.value = _uiState.value.copy(
+            spotifyAuthData = spotifyData,
+            isSpotifyConnected = true,
+            isLoggedIn = authRepository.getCurrentUser() != null
+        )
+        
+        Log.d(TAG, "AuthViewModel state updated - isLoggedIn: ${_uiState.value.isLoggedIn}, isSpotifyConnected: ${_uiState.value.isSpotifyConnected}")
     }
 }
