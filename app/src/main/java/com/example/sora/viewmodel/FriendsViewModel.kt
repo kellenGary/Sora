@@ -24,15 +24,15 @@ class FriendsViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
     private val userRepository: UserRepository = UserRepository(),
     private val followRepository: FollowRepository = FollowRepository(),
-) : ViewModel() {
+) : ViewModel(), IFriendsViewModel {
 
     private val _users = MutableStateFlow<List<UserUi>>(emptyList())
     val users: StateFlow<List<UserUi>> = _users.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
-    val searchQuery = _searchQuery.asStateFlow()
+    override val searchQuery = _searchQuery.asStateFlow()
 
-    val filteredUsers = combine(_users, _searchQuery) { users, query ->
+    override val filteredUsers = combine(_users, _searchQuery) { users, query ->
         if (query.isBlank()) users
         else users.filter { (it.displayName ?: "").contains(query, ignoreCase = true) }
     }.stateIn(
@@ -67,11 +67,11 @@ class FriendsViewModel(
         }
     }
 
-    fun updateSearchQuery(newValue: String) {
+    override fun updateSearchQuery(newValue: String) {
         _searchQuery.value = newValue
     }
 
-    fun follow(userId: String) {
+    override fun follow(userId: String) {
         viewModelScope.launch {
             followRepository.followUser(userId)
 
@@ -81,7 +81,7 @@ class FriendsViewModel(
         }
     }
 
-    fun unfollow(userId: String) {
+    override fun unfollow(userId: String) {
         viewModelScope.launch {
             followRepository.unfollowUser(userId)
         }

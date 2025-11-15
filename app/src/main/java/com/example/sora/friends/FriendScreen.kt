@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -18,14 +17,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.sora.viewmodel.FriendsViewModel
+import com.example.sora.viewmodel.IFriendsViewModel
+import com.example.sora.viewmodel.UserUi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun FriendScreen(
-    navController: NavController? = null,
-    viewModel: FriendsViewModel = viewModel()
+    viewModel: IFriendsViewModel,
 ) {
     val users by viewModel.filteredUsers.collectAsState(initial = emptyList())
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -80,7 +79,30 @@ fun FriendScreen(
 @Preview(showBackground = true)
 @Composable
 fun FriendScreenPreview() {
-    Surface {
-        FriendScreen()
+
+    val fakeVM = object : IFriendsViewModel {
+
+        private val _query = MutableStateFlow("")
+        override val searchQuery: StateFlow<String> = _query
+
+        private val _users = MutableStateFlow(
+            listOf(
+                UserUi("1", "Alice Johnson", null, false),
+                UserUi("2", "Bob Smith", null, true),
+                UserUi("3", "Charlie Kim", null, false),
+            )
+        )
+        override val filteredUsers: StateFlow<List<UserUi>> = _users
+
+        override fun updateSearchQuery(newValue: String) {
+            _query.value = newValue
+        }
+
+        override fun follow(userId: String) { /* no-op for preview */ }
+        override fun unfollow(userId: String) { /* no-op for preview */ }
     }
+
+    FriendScreen(
+        viewModel = fakeVM
+    )
 }
