@@ -28,11 +28,16 @@ import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.example.sora.R
 import com.example.sora.viewmodel.IProfileViewModel
 
 // TODO: Edit this when we are pulling real song data from spotify, may need to change structure
@@ -50,6 +55,7 @@ private const val TAG = "ProfileScreen"
  */
 @Composable
 fun ProfileScreen(
+    navController: NavController,
     profileViewModel: IProfileViewModel,
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
@@ -96,7 +102,8 @@ fun ProfileScreen(
                 pfpUrl = uiState.avatarUrl,
                 modifier = onPfpClickHandler,
                 subHeadingText = "${uiState.uniqueSongs} unique songs played",
-                isPersonalProfile = uiState.isPersonalProfile
+                isPersonalProfile = uiState.isPersonalProfile,
+                navController = navController
             )
         }
 
@@ -128,70 +135,82 @@ fun ProfileHeader(
     modifier: Modifier,
     subHeadingText: String,
     isPersonalProfile: Boolean,
+    navController: NavController
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        AsyncImage(
-            model = pfpUrl,
-            contentDescription = "Profile Picture",
-            placeholder = ColorPainter(Color(0xFFD9D9D9)),
-            error = ColorPainter(Color(0xFFD9D9D9)),
-            contentScale = ContentScale.Crop,
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
             modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(Color.LightGray)
-                .then(modifier)
-        )
-
-        // Spacer between image and text
-        Spacer(modifier = Modifier.width(10.dp))
-
-        // Column for Username and Subheading
-        Column(
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Username
-            Text(
-                text = username,
-                fontWeight = FontWeight.W700,
-                fontSize = 16.sp
+            AsyncImage(
+                model = pfpUrl,
+                contentDescription = "Profile Picture",
+                placeholder = ColorPainter(Color(0xFFD9D9D9)),
+                error = ColorPainter(Color(0xFFD9D9D9)),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray)
+                    .then(modifier)
             )
 
-            // Spacer
-            Spacer(modifier = Modifier.height(4.dp))
+            // Spacer between image and text
+            Spacer(modifier = Modifier.width(10.dp))
 
-            // Subheading text
-            Text(
-                text = subHeadingText,
-                fontWeight = FontWeight.W300,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
+            // Column for Username and Subheading
+            Column(
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Username
+                Text(
+                    text = username,
+                    fontWeight = FontWeight.W700,
+                    fontSize = 16.sp
+                )
 
-            if (!isPersonalProfile) {
-                Spacer(Modifier.height(8.dp))
+                // Spacer
+                Spacer(modifier = Modifier.height(4.dp))
 
-                // TODO: Check if following user or not
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color.DarkGray)
-                        //                    .clickable { onFollowClick() }
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = "Follow",
-                        color = Color.White,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.W600
-                    )
+                // Subheading text
+                Text(
+                    text = subHeadingText,
+                    fontWeight = FontWeight.W300,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
+                if (!isPersonalProfile) {
+                    Spacer(Modifier.height(8.dp))
+
+                    // TODO: Check if following user or not
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color.DarkGray)
+                            //                    .clickable { onFollowClick() }
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "Follow",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.W600
+                        )
+                    }
                 }
             }
+        }
+        IconButton(
+            onClick = { navController.navigate("settings") },
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_settings_24),
+                contentDescription = "Settings"
+            )
         }
     }
 }
@@ -337,7 +356,7 @@ fun ProfileScreenPreview() {
     )
 
     // --- Mock ViewModel implementing IProfileViewModel ---
-    val fakeViewModel = object : com.example.sora.viewmodel.IProfileViewModel {
+    val fakeViewModel = object : IProfileViewModel {
         override val uiState = kotlinx.coroutines.flow.MutableStateFlow(
             com.example.sora.viewmodel.ProfileUiState(
                 displayName = "Ricky Bobby",
@@ -360,6 +379,7 @@ fun ProfileScreenPreview() {
 
     // --- Call the screen with the fake ViewModel ---
     ProfileScreen(
+        navController = rememberNavController(),
         profileViewModel = fakeViewModel
     )
 }

@@ -219,6 +219,7 @@ class MainActivity : ComponentActivity() {
                             NavType.StringType })
                     ) {  backStackEntry ->
                         ProfileScreen(
+                            navController = navController,
                             profileViewModel = profileViewModel
                         )
                     }

@@ -65,14 +65,6 @@ fun BottomNavBar(navController: NavController) {
                     contentDescription = "Profile"
                 )
             }
-            IconButton(
-                onClick = {navController.navigate("settings")},
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_settings_24),
-                    contentDescription = "Settings"
-                )
-            }
         }
     }
 }
