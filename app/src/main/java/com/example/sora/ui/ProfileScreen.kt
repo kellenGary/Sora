@@ -217,14 +217,16 @@ fun ProfileHeader(
                 }
             }
         }
-        IconButton(
-            onClick = { navController.navigate("settings") },
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_settings_24),
-                contentDescription = "Settings"
-            )
+        if (isPersonalProfile) {
+            IconButton(
+                onClick = { navController.navigate("settings") },
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_settings_24),
+                    contentDescription = "Settings"
+                )
+            }
         }
     }
 }
