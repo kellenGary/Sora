@@ -39,12 +39,16 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.sora.R
 import com.example.sora.viewmodel.IProfileViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 
 data class Song(
     val id: String,
     val title: String,
     val artist: String,
-    val albumArtUrl: String?
+    val albumArtUrl: String?,
+    val isLiked: Boolean = false
 )
 
 private const val TAG = "ProfileScreen"
@@ -93,6 +97,7 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(18.dp, 15.dp)
+            .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
     ) {
         // Top container for profile info
         item {
@@ -110,7 +115,8 @@ fun ProfileScreen(
         item {
             ExpandableSongSection(
                 title = "Listening History",
-                songs = uiState.listeningHistory
+                songs = uiState.listeningHistory,
+                profileViewModel = profileViewModel
             )
         }
 
@@ -118,7 +124,8 @@ fun ProfileScreen(
         item {
             ExpandableSongSection(
                 title = "Likes",
-                songs = uiState.likedSongs
+                songs = uiState.likedSongs,
+                profileViewModel = profileViewModel
             )
         }
     }
@@ -222,6 +229,7 @@ fun ProfileHeader(
 fun ExpandableSongSection(
     title: String,
     songs: List<Song>,
+    profileViewModel: IProfileViewModel,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -264,6 +272,7 @@ fun ExpandableSongSection(
             displayedSongs.forEach { song ->
                 SongCard(
                     song = song,
+                    onLikeToggle = { s, _ -> profileViewModel.toggleLike(s) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -279,8 +288,10 @@ fun ExpandableSongSection(
 @Composable
 fun SongCard(
     song: Song,
+    onLikeToggle: (Song, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
+
     // Card container
     Box(
         modifier = modifier
@@ -327,6 +338,23 @@ fun SongCard(
                     fontWeight = FontWeight.W300,
                     color = Color.Black
                 )
+
+                // Heart Icon at bottom right
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentSize(Alignment.BottomEnd)
+                ) {
+                    IconButton(
+                        onClick = { onLikeToggle(song, !song.isLiked) }
+                    ) {
+                        Icon(
+                            imageVector = if (song.isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = if (song.isLiked) "Unlike" else "Like",
+                            tint = if (song.isLiked) Color.Red else Color.Gray
+                        )
+                    }
+                }
             }
         }
 
@@ -372,6 +400,10 @@ fun ProfileScreenPreview() {
         }
 
         override fun updateAvatar(context: android.content.Context, uri: android.net.Uri) {
+            // No-op for preview
+        }
+
+        override fun toggleLike(song: Song) {
             // No-op for preview
         }
     }

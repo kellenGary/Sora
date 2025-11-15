@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.AuthRepository
+import com.example.sora.data.repository.LikedSongsRepository
 import com.example.sora.ui.Song
 import com.example.sora.data.repository.UserRepository
 import com.example.sora.data.repository.UserStatsRepository
@@ -30,6 +31,7 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
     private val userRepository = UserRepository()
     private val authRepository = AuthRepository()
     private val userStatsRepository = UserStatsRepository()
+    private val likedSongsRepository = LikedSongsRepository();
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     override val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -78,6 +80,19 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
             val profile = userRepository.getUser(idToLoad)
 
+            val likedSongIds = likedSongsRepository.getLikedSongIds()
+            val likedSongsUi = likedSongIds.map { songId ->
+                // For simplicity, map liked song IDs to Song objects
+                // You might want to fetch full song info if available
+                Song(
+                    id = songId,
+                    title = "Unknown",
+                    artist = "Unknown",
+                    albumArtUrl = null,
+                    isLiked = true
+                )
+            }
+
             val fullHistory = userStatsRepository.getFullListeningHistory(
                 userId = idToLoad,
                 limit = 10
@@ -88,7 +103,8 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                     id = row.song_id,
                     title = row.song_title,
                     artist = row.artist_name,
-                    albumArtUrl = row.album_cover
+                    albumArtUrl = row.album_cover,
+                    isLiked = likedSongIds.contains(row.song_id)
                 )
             }
 
@@ -98,11 +114,37 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                 displayName = profile?.displayName ?: "User",
                 avatarUrl = profile?.avatarUrl,
                 listeningHistory = historyUiSongs,
+                likedSongs = likedSongsUi,
                 uniqueSongs = uniqueSongs,
                 isPersonalProfile = (currentUserId == idToLoad),
                 // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
             )
             Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
+        }
+    }
+
+    override fun toggleLike(song: Song) {
+        viewModelScope.launch {
+            val currentUser = authRepository.getCurrentUser() ?: return@launch
+            val updatedHistory = _uiState.value.listeningHistory.map {
+                if (it.id == song.id) {
+                    if (it.isLiked) likedSongsRepository.unlikeSong(it.id)
+                    else likedSongsRepository.likeSong(it.id)
+                    it.copy(isLiked = !it.isLiked)
+                } else it
+            }
+
+            val updatedLikes = _uiState.value.likedSongs.toMutableList()
+            if (song.isLiked) {
+                updatedLikes.removeAll { it.id == song.id }
+            } else {
+                updatedLikes.add(song.copy(isLiked = true))
+            }
+
+            _uiState.value = _uiState.value.copy(
+                listeningHistory = updatedHistory,
+                likedSongs = updatedLikes
+            )
         }
     }
 
