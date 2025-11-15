@@ -11,12 +11,12 @@ class LikedSongsRepository {
     private val client = SupabaseClient.supabase
     private val TAG = "LikedSongsRepository"
 
-    suspend fun getLikedSongs(): List<SongUi> {
+    suspend fun getLikedSongs(userId: String): List<SongUi> {
         val currentUser = client.auth.currentUserOrNull() ?: return emptyList()
 
         val response = client.postgrest["liked_songs_full"]
             .select {
-                filter { eq("user_id", currentUser.id) }
+                filter { eq("user_id", userId) }
             }
 
         val rows = response.decodeList<LikedSongFull>()
@@ -36,7 +36,7 @@ class LikedSongsRepository {
 
         if (currentUser == null) {
             Log.d(TAG, "User not authenticated")
-            return
+            return false
         }
 
         try {

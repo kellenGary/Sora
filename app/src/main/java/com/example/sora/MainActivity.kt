@@ -199,7 +199,7 @@ class MainActivity : ComponentActivity() {
                         SongScreen(navController, songId = songId)
                     }
                     composable("friends") {
-                        FriendScreen(viewModel<FriendsViewModel>())
+                        FriendScreen(navController, viewModel<FriendsViewModel>())
                     }
                     composable("settings") {
                         SettingScreen(navController)
@@ -214,12 +214,18 @@ class MainActivity : ComponentActivity() {
                         ExpandedPlayer(navController, playbackViewModel)
                     }
                     composable(
-                        route="profile/{userId}",
-                        arguments = listOf(navArgument("userId") { type =
-                            NavType.StringType })
+                        route="profile?userId={userId}",
+                        arguments = listOf(navArgument("userId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
                     ) {  backStackEntry ->
+                        val userIdArg = backStackEntry.arguments?.getString("userId")
                         ProfileScreen(
                             navController = navController,
+                            userId = userIdArg,
                             profileViewModel = profileViewModel
                         )
                     }

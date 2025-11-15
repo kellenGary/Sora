@@ -58,7 +58,7 @@ fun BottomNavBar(navController: NavController) {
                 )
             }
             IconButton(
-                onClick = {navController.navigate("profile/user")},
+                onClick = {navController.navigate("profile")},
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_profile),

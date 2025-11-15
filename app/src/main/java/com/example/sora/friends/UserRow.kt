@@ -1,6 +1,7 @@
 package com.example.sora.friends
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,7 +24,11 @@ import coil.compose.AsyncImage
 import com.example.sora.viewmodel.UserUi
 
 @Composable
-fun UserRow(user: UserUi, onFollowClick: () -> Unit) {
+fun UserRow(
+    user: UserUi,
+    onFollowClick: () -> Unit,
+    onProfileClick: (String) -> Unit
+) {
     Row(
         modifier = Modifier
             .padding(12.dp)
@@ -38,9 +43,14 @@ fun UserRow(user: UserUi, onFollowClick: () -> Unit) {
                 .size(48.dp)
                 .clip(CircleShape)
                 .background(Color.LightGray)
+                .clickable { onProfileClick(user.id) }
         )
 
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onProfileClick(user.id) }
+        ) {
             user.displayName?.let {
                 Text(
                     text = it,

@@ -73,15 +73,17 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
             val currentUserId = authRepository.getCurrentUser()?.id
             val idToLoad = userId ?: authRepository.getCurrentUser()?.id
 
-            if (idToLoad == null) {
-                Log.e(TAG, "No userId available to load profile")
+            if (idToLoad == null || currentUserId == null) {
+                Log.e(TAG, "No userId available to load profile or not logged in")
                 return@launch
             }
 
             val profile = userRepository.getUser(idToLoad)
 
-            val likedSongsUi = likedSongsRepository.getLikedSongs()
-            val likedSongIdsSet = likedSongsUi.map { it.id }.toSet()
+            val likedSongsUi = likedSongsRepository.getLikedSongs(idToLoad)
+
+            val personalLikedSongs = likedSongsRepository.getLikedSongs(currentUserId)
+            val likedSongIdsSet = personalLikedSongs.map { it.id }.toSet()
 
             val fullHistory = userStatsRepository.getFullListeningHistory(
                 userId = idToLoad,
@@ -124,25 +126,32 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                 likedSongsRepository.likeSong(song.id)
             }
 
-            // Only update local UI if DB update succeeded
-            if (success) {
-                val updatedHistory = _uiState.value.listeningHistory.map {
-                    if (it.id == song.id) it.copy(isLiked = !it.isLiked)
-                    else it
-                }
 
-                val updatedLikes = _uiState.value.likedSongs.toMutableList()
-                if (song.isLiked) {
-                    updatedLikes.removeAll { it.id == song.id }
-                } else {
-                    updatedLikes.add(song.copy(isLiked = true))
-                }
+            if (!success) return@launch
 
-                _uiState.value = _uiState.value.copy(
-                    listeningHistory = updatedHistory,
-                    likedSongs = updatedLikes
-                )
+
+            val updatedHistory = _uiState.value.listeningHistory.map {
+                if (it.id == song.id) it.copy(isLiked = !it.isLiked)
+                else it
             }
+
+            val updatedLikes = if (_uiState.value.isPersonalProfile) {
+                val currentLikes = _uiState.value.likedSongs.toMutableList()
+                if (song.isLiked) {
+                    currentLikes.removeAll { it.id == song.id }
+                } else {
+                    currentLikes.add(song.copy(isLiked = true))
+                }
+                currentLikes
+            } else {
+                _uiState.value.likedSongs // leave as is
+            }
+
+            _uiState.value = _uiState.value.copy(
+                listeningHistory = updatedHistory,
+                likedSongs = updatedLikes
+            )
+
         }
     }
 

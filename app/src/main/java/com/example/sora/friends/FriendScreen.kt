@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.sora.viewmodel.IFriendsViewModel
 import com.example.sora.viewmodel.UserUi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun FriendScreen(
+    navController: NavController,
     viewModel: IFriendsViewModel,
 ) {
     val users by viewModel.filteredUsers.collectAsState(initial = emptyList())
@@ -99,6 +102,9 @@ fun FriendScreen(
                         } else {
                             viewModel.follow(user.id)
                         }
+                    },
+                    onProfileClick = { userId ->
+                        navController.navigate("profile?userId=$userId")
                     }
                 )
             }
@@ -152,6 +158,7 @@ fun FriendScreenPreview() {
     }
 
     FriendScreen(
+        navController = rememberNavController(),
         viewModel = fakeVM
     )
 }

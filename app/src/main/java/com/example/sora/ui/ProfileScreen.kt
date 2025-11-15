@@ -59,12 +59,13 @@ private const val TAG = "ProfileScreen"
 @Composable
 fun ProfileScreen(
     navController: NavController,
+    userId: String?,
     profileViewModel: IProfileViewModel,
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        profileViewModel.loadProfile(null)
+        profileViewModel.loadProfile(userId)
         Log.d(TAG, "ProfileScreen Composed for user: ${uiState.displayName}")
     }
 
@@ -411,6 +412,7 @@ fun ProfileScreenPreview() {
     // --- Call the screen with the fake ViewModel ---
     ProfileScreen(
         navController = rememberNavController(),
+        userId = "",
         profileViewModel = fakeViewModel
     )
 }
