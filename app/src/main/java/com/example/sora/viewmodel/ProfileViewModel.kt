@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.AuthRepository
+import com.example.sora.data.repository.FollowRepository
 import com.example.sora.data.repository.LikedSongsRepository
 import com.example.sora.data.repository.UserRepository
 import com.example.sora.data.repository.UserStatsRepository
@@ -22,7 +23,8 @@ data class ProfileUiState(
     val isPersonalProfile: Boolean = false,
     val uniqueSongs: Int = 0,
     val listeningHistory: List<SongUi> = emptyList(),
-    val likedSongs: List<SongUi> = emptyList()
+    val likedSongs: List<SongUi> = emptyList(),
+    val isFollowed: Boolean = false
 )
 
 private const val TAG = "ProfileViewModel"
@@ -32,6 +34,7 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
     private val authRepository = AuthRepository()
     private val userStatsRepository = UserStatsRepository()
     private val likedSongsRepository = LikedSongsRepository()
+    private val followRepository = FollowRepository()
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     override val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -102,6 +105,10 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
             val uniqueSongs = userStatsRepository.getUniqueSongCount(idToLoad)
 
+            val isFollowed = if (currentUserId != idToLoad) {
+                followRepository.isFollowing(idToLoad)
+            } else false
+
             _uiState.value = _uiState.value.copy(
                 displayName = profile?.displayName ?: "User",
                 avatarUrl = profile?.avatarUrl,
@@ -109,6 +116,7 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                 likedSongs = likedSongsUi,
                 uniqueSongs = uniqueSongs,
                 isPersonalProfile = (currentUserId == idToLoad),
+                isFollowed = isFollowed,
                 // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
             )
             Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
@@ -152,6 +160,21 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                 likedSongs = updatedLikes
             )
 
+        }
+    }
+
+    override fun follow(userId: String) {
+        viewModelScope.launch {
+            followRepository.followUser(userId)
+
+            _uiState.value = _uiState.value.copy(isFollowed = true)
+        }
+    }
+
+    override fun unfollow(userId: String) {
+        viewModelScope.launch {
+            followRepository.unfollowUser(userId)
+            _uiState.value = _uiState.value.copy(isFollowed = false)
         }
     }
 

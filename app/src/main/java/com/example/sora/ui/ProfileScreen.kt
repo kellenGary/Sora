@@ -108,6 +108,11 @@ fun ProfileScreen(
                 modifier = onPfpClickHandler,
                 subHeadingText = "${uiState.uniqueSongs} unique songs played",
                 isPersonalProfile = uiState.isPersonalProfile,
+                isFollowed = uiState.isFollowed,
+                handleFollowClick = {
+                    if (uiState.isFollowed) profileViewModel.unfollow(userId!!)
+                    else profileViewModel.follow(userId!!)
+                },
                 navController = navController
             )
         }
@@ -142,6 +147,8 @@ fun ProfileHeader(
     modifier: Modifier,
     subHeadingText: String,
     isPersonalProfile: Boolean,
+    isFollowed: Boolean,
+    handleFollowClick: () -> Unit,
     navController: NavController
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -197,11 +204,11 @@ fun ProfileHeader(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
                             .background(Color.DarkGray)
-                            //                    .clickable { onFollowClick() }
+                            .clickable { handleFollowClick() }
                             .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = "Follow",
+                            text = if(isFollowed) "Unfollow" else "Follow",
                             color = Color.White,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.W600
@@ -405,6 +412,14 @@ fun ProfileScreenPreview() {
         }
 
         override fun toggleLike(song: SongUi) {
+            // No-op for preview
+        }
+
+        override fun follow(userId: String) {
+            // No-op for preview
+        }
+
+        override fun unfollow(userId: String) {
             // No-op for preview
         }
     }

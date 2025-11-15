@@ -11,4 +11,6 @@ interface IProfileViewModel{
     fun loadProfile(userId: String?)
     fun updateAvatar(context: Context, uri: Uri)
     fun toggleLike(song: SongUi)
+    fun follow(userId: String)
+    fun unfollow(userId: String)
 }
