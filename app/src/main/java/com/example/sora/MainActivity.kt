@@ -199,7 +199,7 @@ class MainActivity : ComponentActivity() {
                         SongScreen(navController, songId = songId)
                     }
                     composable("friends") {
-                        FriendScreen(navController, viewModel<FriendsViewModel>())
+                        FriendScreen(viewModel<FriendsViewModel>())
                     }
                     composable("settings") {
                         SettingScreen(navController)
