@@ -2,7 +2,7 @@ package com.example.sora.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import com.example.sora.ui.Song
+import com.example.sora.ui.SongUi
 import kotlinx.coroutines.flow.StateFlow
 
 interface IProfileViewModel{
@@ -10,5 +10,5 @@ interface IProfileViewModel{
     val uiState: StateFlow<ProfileUiState>
     fun loadProfile(userId: String?)
     fun updateAvatar(context: Context, uri: Uri)
-    fun toggleLike(song: Song)
+    fun toggleLike(song: SongUi)
 }

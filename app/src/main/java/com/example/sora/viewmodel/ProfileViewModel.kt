@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.AuthRepository
 import com.example.sora.data.repository.LikedSongsRepository
-import com.example.sora.ui.Song
 import com.example.sora.data.repository.UserRepository
 import com.example.sora.data.repository.UserStatsRepository
+import com.example.sora.ui.SongUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,8 +21,8 @@ data class ProfileUiState(
     val avatarUrl: String? = null,
     val isPersonalProfile: Boolean = false,
     val uniqueSongs: Int = 0,
-    val listeningHistory: List<Song> = emptyList(),
-    val likedSongs: List<Song> = emptyList()
+    val listeningHistory: List<SongUi> = emptyList(),
+    val likedSongs: List<SongUi> = emptyList()
 )
 
 private const val TAG = "ProfileViewModel"
@@ -80,18 +80,8 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
             val profile = userRepository.getUser(idToLoad)
 
-            val likedSongIds = likedSongsRepository.getLikedSongIds()
-            val likedSongsUi = likedSongIds.map { songId ->
-                // For simplicity, map liked song IDs to Song objects
-                // You might want to fetch full song info if available
-                Song(
-                    id = songId,
-                    title = "Unknown",
-                    artist = "Unknown",
-                    albumArtUrl = null,
-                    isLiked = true
-                )
-            }
+            val likedSongsUi = likedSongsRepository.getLikedSongs()
+            val likedSongIdsSet = likedSongsUi.map { it.id }.toSet()
 
             val fullHistory = userStatsRepository.getFullListeningHistory(
                 userId = idToLoad,
@@ -99,12 +89,12 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
             )
 
             val historyUiSongs = fullHistory.map { row ->
-                Song(
+                SongUi(
                     id = row.song_id,
                     title = row.song_title,
                     artist = row.artist_name,
                     albumArtUrl = row.album_cover,
-                    isLiked = likedSongIds.contains(row.song_id)
+                    isLiked = likedSongIdsSet.contains(row.song_id)
                 )
             }
 
@@ -123,28 +113,36 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
         }
     }
 
-    override fun toggleLike(song: Song) {
+    override fun toggleLike(song: SongUi) {
         viewModelScope.launch {
             val currentUser = authRepository.getCurrentUser() ?: return@launch
-            val updatedHistory = _uiState.value.listeningHistory.map {
-                if (it.id == song.id) {
-                    if (it.isLiked) likedSongsRepository.unlikeSong(it.id)
-                    else likedSongsRepository.likeSong(it.id)
-                    it.copy(isLiked = !it.isLiked)
-                } else it
-            }
 
-            val updatedLikes = _uiState.value.likedSongs.toMutableList()
-            if (song.isLiked) {
-                updatedLikes.removeAll { it.id == song.id }
+            // Perform DB update first
+            val success = if (song.isLiked) {
+                likedSongsRepository.unlikeSong(song.id)
             } else {
-                updatedLikes.add(song.copy(isLiked = true))
+                likedSongsRepository.likeSong(song.id)
             }
 
-            _uiState.value = _uiState.value.copy(
-                listeningHistory = updatedHistory,
-                likedSongs = updatedLikes
-            )
+            // Only update local UI if DB update succeeded
+            if (true) {
+                val updatedHistory = _uiState.value.listeningHistory.map {
+                    if (it.id == song.id) it.copy(isLiked = !it.isLiked)
+                    else it
+                }
+
+                val updatedLikes = _uiState.value.likedSongs.toMutableList()
+                if (song.isLiked) {
+                    updatedLikes.removeAll { it.id == song.id }
+                } else {
+                    updatedLikes.add(song.copy(isLiked = true))
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    listeningHistory = updatedHistory,
+                    likedSongs = updatedLikes
+                )
+            }
         }
     }
 

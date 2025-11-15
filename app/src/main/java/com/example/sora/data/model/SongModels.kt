@@ -107,3 +107,14 @@ data class UniqueSongCount(
     @SerialName("unique_song_count")
     val uniqueSongCount: Int
 )
+
+@Serializable
+data class LikedSongFull(
+    val liked_id: Int,
+    val user_id: String,
+    val song_id: String,
+    val song_title: String,
+    val artist_name: String,
+    val album_name: String,
+    val album_cover: String? = null
+)

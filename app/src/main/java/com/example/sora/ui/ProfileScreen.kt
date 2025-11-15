@@ -43,7 +43,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 
-data class Song(
+data class SongUi(
     val id: String,
     val title: String,
     val artist: String,
@@ -228,7 +228,7 @@ fun ProfileHeader(
 @Composable
 fun ExpandableSongSection(
     title: String,
-    songs: List<Song>,
+    songs: List<SongUi>,
     profileViewModel: IProfileViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -287,8 +287,8 @@ fun ExpandableSongSection(
  */
 @Composable
 fun SongCard(
-    song: Song,
-    onLikeToggle: (Song, Boolean) -> Unit = { _, _ -> },
+    song: SongUi,
+    onLikeToggle: (SongUi, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
 
@@ -369,17 +369,17 @@ fun SongCard(
 @Composable
 fun ProfileScreenPreview() {
     val fakeHistory = listOf(
-        Song("1", "Bohemian Rhapsody", "Queen", null),
-        Song("2", "Stairway to Heaven", "Led Zeppelin", null),
-        Song("3", "Hotel California", "Eagles", null),
-        Song("4", "Smells Like Teen Spirit", "Nirvana", null)
+        SongUi("1", "Bohemian Rhapsody", "Queen", null),
+        SongUi("2", "Stairway to Heaven", "Led Zeppelin", null),
+        SongUi("3", "Hotel California", "Eagles", null),
+        SongUi("4", "Smells Like Teen Spirit", "Nirvana", null)
     )
 
     val fakeLikes = listOf(
-        Song("5", "Blinding Lights", "The Weeknd", null),
-        Song("6", "As It Was", "Harry Styles", null),
-        Song("7", "good 4 u", "Olivia Rodrigo", null),
-        Song("8", "Levitating", "Dua Lipa", null)
+        SongUi("5", "Blinding Lights", "The Weeknd", null),
+        SongUi("6", "As It Was", "Harry Styles", null),
+        SongUi("7", "good 4 u", "Olivia Rodrigo", null),
+        SongUi("8", "Levitating", "Dua Lipa", null)
     )
 
     // --- Mock ViewModel implementing IProfileViewModel ---
@@ -403,7 +403,7 @@ fun ProfileScreenPreview() {
             // No-op for preview
         }
 
-        override fun toggleLike(song: Song) {
+        override fun toggleLike(song: SongUi) {
             // No-op for preview
         }
     }
