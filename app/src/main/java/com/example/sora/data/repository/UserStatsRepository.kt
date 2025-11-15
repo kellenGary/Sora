@@ -2,6 +2,7 @@ package com.example.sora.data.repository
 
 import com.example.sora.auth.SupabaseClient
 import com.example.sora.data.model.FullHistoryRow
+import com.example.sora.data.model.UniqueSongCount
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 
@@ -24,5 +25,15 @@ class UserStatsRepository {
             }
             .decodeList<FullHistoryRow>()
     }
+
+    suspend fun getUniqueSongCount(userId: String): Int {
+        return client.postgrest["user_unique_song_count"]
+            .select {
+                filter { eq("user_id", userId) }
+            }
+            .decodeSingle<UniqueSongCount>()
+            .uniqueSongCount
+    }
+
 
 }

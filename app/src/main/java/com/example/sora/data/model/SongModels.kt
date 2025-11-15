@@ -99,3 +99,11 @@ data class FullHistoryRow(
     val album_link: String,
     val album_release_date: String? = null
 )
+
+@Serializable
+data class UniqueSongCount(
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("unique_song_count")
+    val uniqueSongCount: Int
+)

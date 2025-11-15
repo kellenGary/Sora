@@ -92,10 +92,13 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                 )
             }
 
+            val uniqueSongs = userStatsRepository.getUniqueSongCount(idToLoad)
+
             _uiState.value = _uiState.value.copy(
                 displayName = profile?.displayName ?: "User",
                 avatarUrl = profile?.avatarUrl,
                 listeningHistory = historyUiSongs,
+                uniqueSongs = uniqueSongs,
                 isPersonalProfile = (currentUserId == idToLoad),
                 // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
             )
