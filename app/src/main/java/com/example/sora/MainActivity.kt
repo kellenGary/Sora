@@ -44,6 +44,7 @@ import com.example.sora.ui.settings.optionScreens.ChangePasswordScreen
 import com.example.sora.ui.settings.SettingScreen
 import com.example.sora.ui.settings.optionScreens.LinkedAccountScreen
 import com.example.sora.utils.PermissionHandler
+import com.example.sora.viewmodel.FriendsViewModel
 import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -198,7 +199,7 @@ class MainActivity : ComponentActivity() {
                         SongScreen(navController, songId = songId)
                     }
                     composable("friends") {
-                        FriendScreen(navController)
+                        FriendScreen(viewModel<FriendsViewModel>())
                     }
                     composable("settings") {
                         SettingScreen(navController)
@@ -217,10 +218,7 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("userId") { type =
                             NavType.StringType })
                     ) {  backStackEntry ->
-                        // TODO: Shouldnt fail this next userID
-                        val userId = backStackEntry.arguments?.getString("userId") ?: "user"
                         ProfileScreen(
-                            userId = userId,
                             profileViewModel = profileViewModel
                         )
                     }

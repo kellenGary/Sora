@@ -1,5 +1,5 @@
 package com.example.sora.friends
-
+/*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
 @Composable
+@Deprecated("Mutual friends are not supported yet")
 fun MutualFriendsRow(mutualFriends: List<MutualFriend>) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
         // Show up to 3 avatars, side by side (no overlap for compatibility)
@@ -45,3 +46,5 @@ fun MutualFriendsRow(mutualFriends: List<MutualFriend>) {
         )
     }
 }
+
+*/

@@ -1,21 +1,25 @@
 package com.example.sora.data.repository
 
 import com.example.sora.auth.SupabaseClient
-import com.example.sora.data.model.Profile
+import com.example.sora.data.model.User
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
 import java.io.File
-import android.util.Log
 
-class ProfileRepository {
+class UserRepository {
     private val client = SupabaseClient.supabase
 
+    suspend fun getAllUsers(): List<User> {
+        return client.postgrest["users"]
+            .select()
+            .decodeList<User>()
+    }
     @OptIn(kotlinx.serialization.InternalSerializationApi::class)
-    suspend fun getProfile(id: String): Profile? {
+    suspend fun getUser(id: String): User? {
         return client.postgrest["users"]
             .select { filter { eq("id", id) } }
-            .decodeSingleOrNull<Profile>()
+            .decodeSingleOrNull<User>()
     }
 
     suspend fun uploadProfilePicture(imageFile: File): Result<String> {
@@ -38,6 +42,6 @@ class ProfileRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
-        
+
     }
 }

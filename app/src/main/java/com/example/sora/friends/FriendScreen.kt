@@ -8,82 +8,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-
-// Mutual friend data class
-data class MutualFriend(val name: String, val profileImageUrl: String)
-
-// Dummy user data class
-data class User(
-    val id: Int,
-    val name: String,
-    val handle: String,
-    val bio: String,
-    val profileImageUrl: String,
-    val mutualFriends: List<MutualFriend> = emptyList(),
-    val isFollowed: Boolean = false
-)
+import com.example.sora.viewmodel.IFriendsViewModel
+import com.example.sora.viewmodel.UserUi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
-fun FriendScreen(navController: NavController? = null) {
-    var searchQuery by remember { mutableStateOf("") }
-    var recommendedUsers by remember {
-        mutableStateOf(
-            listOf(
-                User(
-                    1, "Alice Johnson", "@alice", "Coffee lover. Cat person.", "https://randomuser.me/api/portraits/women/1.jpg",
-                    mutualFriends = listOf(
-                        MutualFriend("Bob", "https://randomuser.me/api/portraits/men/2.jpg"),
-                        MutualFriend("Diana", "https://randomuser.me/api/portraits/women/4.jpg")
-                    )
-                ),
-                User(
-                    2, "Bob Smith", "@bob", "Runner. Bookworm.", "https://randomuser.me/api/portraits/men/2.jpg",
-                    mutualFriends = listOf(
-                        MutualFriend("Alice", "https://randomuser.me/api/portraits/women/1.jpg"),
-                        MutualFriend("Charlie", "https://randomuser.me/api/portraits/men/3.jpg"),
-                        MutualFriend("Eve", "https://randomuser.me/api/portraits/women/5.jpg")
-                    )
-                ),
-                User(
-                    3, "Charlie Lee", "@charlie", "Gamer. Musician.", "https://randomuser.me/api/portraits/men/3.jpg",
-                    mutualFriends = listOf(
-                        MutualFriend("Bob", "https://randomuser.me/api/portraits/men/2.jpg")
-                    )
-                ),
-                User(
-                    4, "Diana Prince", "@diana", "Traveler. Foodie.", "https://randomuser.me/api/portraits/women/4.jpg",
-                    mutualFriends = listOf(
-                        MutualFriend("Eve", "https://randomuser.me/api/portraits/women/5.jpg"),
-                        MutualFriend("Alice", "https://randomuser.me/api/portraits/women/1.jpg")
-                    )
-                ),
-                User(
-                    5, "Eve Adams", "@eve", "Designer. Dreamer.", "https://randomuser.me/api/portraits/women/5.jpg",
-                    mutualFriends = listOf(
-                        MutualFriend("Diana", "https://randomuser.me/api/portraits/women/4.jpg")
-                    )
-                )
-            )
-        )
-    }
-
-    // Filter users based on search query
-    val filteredUsers = if (searchQuery.isBlank()) recommendedUsers else recommendedUsers.filter {
-        it.name.contains(searchQuery, ignoreCase = true)
-    }
+fun FriendScreen(
+    viewModel: IFriendsViewModel,
+) {
+    val users by viewModel.filteredUsers.collectAsState(initial = emptyList())
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
     Column(
         modifier = Modifier
@@ -96,27 +40,37 @@ fun FriendScreen(navController: NavController? = null) {
             fontSize = 16.sp,
         )
         Spacer(modifier = Modifier.height(16.dp))
+
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { searchQuery = it },
+            onValueChange = { viewModel.updateSearchQuery(it) },
             label = { Text("Search users") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = "Recommended",
             fontWeight = FontWeight.W400,
             fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            filteredUsers.forEach { user ->
-                UserRow(user = user, onFollowClick = {
-                    recommendedUsers = recommendedUsers.map {
-                        if (it.id == user.id) it.copy(isFollowed = !it.isFollowed) else it
+            users.forEach { user ->
+                UserRow(
+                    user = user,
+                    onFollowClick = {
+                        if (user.isFollowed) {
+                            viewModel.unfollow(user.id)
+                        } else {
+                            viewModel.follow(user.id)
+                        }
                     }
-                })
+                )
             }
         }
     }
@@ -125,7 +79,30 @@ fun FriendScreen(navController: NavController? = null) {
 @Preview(showBackground = true)
 @Composable
 fun FriendScreenPreview() {
-    Surface {
-        FriendScreen()
+
+    val fakeVM = object : IFriendsViewModel {
+
+        private val _query = MutableStateFlow("")
+        override val searchQuery: StateFlow<String> = _query
+
+        private val _users = MutableStateFlow(
+            listOf(
+                UserUi("1", "Alice Johnson", null, false),
+                UserUi("2", "Bob Smith", null, true),
+                UserUi("3", "Charlie Kim", null, false),
+            )
+        )
+        override val filteredUsers: StateFlow<List<UserUi>> = _users
+
+        override fun updateSearchQuery(newValue: String) {
+            _query.value = newValue
+        }
+
+        override fun follow(userId: String) { /* no-op for preview */ }
+        override fun unfollow(userId: String) { /* no-op for preview */ }
     }
+
+    FriendScreen(
+        viewModel = fakeVM
+    )
 }

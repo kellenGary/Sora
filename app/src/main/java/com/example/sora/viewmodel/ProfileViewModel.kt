@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.AuthRepository
-import com.example.sora.data.repository.ProfileRepository
 import com.example.sora.ui.Song
+import com.example.sora.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +17,7 @@ import java.io.File
 data class ProfileUiState(
     val displayName: String? = null,
     val avatarUrl: String? = null,
+    val isPersonalProfile: Boolean = false,
     val uniqueSongs: Int = 0,
     val listeningHistory: List<Song> = emptyList(),
     val likedSongs: List<Song> = emptyList()
@@ -25,7 +26,7 @@ data class ProfileUiState(
 private const val TAG = "ProfileViewModel"
 
 class ProfileViewModel: ViewModel(), IProfileViewModel {
-    private val profileRepository = ProfileRepository();
+    private val userRepository = UserRepository();
     private val authRepository = AuthRepository();
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -45,7 +46,7 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                         inputStream?.copyTo(output)
                     }
 
-                    val result = profileRepository.uploadProfilePicture(tempFile)
+                    val result = userRepository.uploadProfilePicture(tempFile)
 
                     result.onSuccess { newAvatarUrl ->
                         // Coil's Async Image aggressivley caches so we need to add a cache buster
@@ -65,12 +66,15 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
     override fun loadProfile(userId: String?) {
         viewModelScope.launch {
+            val currentUserId = authRepository.getCurrentUser()?.id
             val idToLoad = userId ?: authRepository.getCurrentUser()?.id
+
             if (idToLoad != null) {
-                val profile = profileRepository.getProfile(idToLoad)
+                val profile = userRepository.getUser(idToLoad)
                 _uiState.value = _uiState.value.copy(
                     displayName = profile?.displayName ?: "User",
-                    avatarUrl = profile?.avatarUrl
+                    avatarUrl = profile?.avatarUrl,
+                    isPersonalProfile = (currentUserId == idToLoad),
                     // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
                 )
                 Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
