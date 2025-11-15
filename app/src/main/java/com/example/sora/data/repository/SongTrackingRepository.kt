@@ -6,12 +6,15 @@ import com.example.sora.data.model.Album
 import com.example.sora.data.model.AlbumInsert
 import com.example.sora.data.model.Artist
 import com.example.sora.data.model.ArtistInsert
+import com.example.sora.data.model.FullHistoryRow
 import com.example.sora.data.model.ListenHistory
 import com.example.sora.data.model.Song
 import com.example.sora.data.model.SongInsert
 import com.example.sora.playback.SpotifyTrack
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

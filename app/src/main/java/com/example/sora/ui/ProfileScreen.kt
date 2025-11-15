@@ -40,7 +40,6 @@ import coil.compose.AsyncImage
 import com.example.sora.R
 import com.example.sora.viewmodel.IProfileViewModel
 
-// TODO: Edit this when we are pulling real song data from spotify, may need to change structure
 data class Song(
     val id: String,
     val title: String,

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.AuthRepository
 import com.example.sora.ui.Song
 import com.example.sora.data.repository.UserRepository
+import com.example.sora.data.repository.UserStatsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,8 +27,9 @@ data class ProfileUiState(
 private const val TAG = "ProfileViewModel"
 
 class ProfileViewModel: ViewModel(), IProfileViewModel {
-    private val userRepository = UserRepository();
-    private val authRepository = AuthRepository();
+    private val userRepository = UserRepository()
+    private val authRepository = AuthRepository()
+    private val userStatsRepository = UserStatsRepository()
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     override val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -69,18 +71,35 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
             val currentUserId = authRepository.getCurrentUser()?.id
             val idToLoad = userId ?: authRepository.getCurrentUser()?.id
 
-            if (idToLoad != null) {
-                val profile = userRepository.getUser(idToLoad)
-                _uiState.value = _uiState.value.copy(
-                    displayName = profile?.displayName ?: "User",
-                    avatarUrl = profile?.avatarUrl,
-                    isPersonalProfile = (currentUserId == idToLoad),
-                    // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
-                )
-                Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
-            } else {
+            if (idToLoad == null) {
                 Log.e(TAG, "No userId available to load profile")
+                return@launch
             }
+
+            val profile = userRepository.getUser(idToLoad)
+
+            val fullHistory = userStatsRepository.getFullListeningHistory(
+                userId = idToLoad,
+                limit = 10
+            )
+
+            val historyUiSongs = fullHistory.map { row ->
+                Song(
+                    id = row.song_id,
+                    title = row.song_title,
+                    artist = row.artist_name,
+                    albumArtUrl = row.album_cover
+                )
+            }
+
+            _uiState.value = _uiState.value.copy(
+                displayName = profile?.displayName ?: "User",
+                avatarUrl = profile?.avatarUrl,
+                listeningHistory = historyUiSongs,
+                isPersonalProfile = (currentUserId == idToLoad),
+                // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
+            )
+            Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
         }
     }
 
