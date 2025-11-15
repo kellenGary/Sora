@@ -31,7 +31,7 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
     private val userRepository = UserRepository()
     private val authRepository = AuthRepository()
     private val userStatsRepository = UserStatsRepository()
-    private val likedSongsRepository = LikedSongsRepository();
+    private val likedSongsRepository = LikedSongsRepository()
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     override val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -115,7 +115,7 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
     override fun toggleLike(song: SongUi) {
         viewModelScope.launch {
-            val currentUser = authRepository.getCurrentUser() ?: return@launch
+            if (authRepository.getCurrentUser() == null) return@launch
 
             // Perform DB update first
             val success = if (song.isLiked) {
@@ -125,7 +125,7 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
             }
 
             // Only update local UI if DB update succeeded
-            if (true) {
+            if (success) {
                 val updatedHistory = _uiState.value.listeningHistory.map {
                     if (it.id == song.id) it.copy(isLiked = !it.isLiked)
                     else it

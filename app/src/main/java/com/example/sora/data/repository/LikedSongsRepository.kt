@@ -31,7 +31,7 @@ class LikedSongsRepository {
         }
     }
 
-    suspend fun likeSong(songId: String) {
+    suspend fun likeSong(songId: String): Boolean {
         val currentUser = client.auth.currentUserOrNull()
 
         if (currentUser == null) {
@@ -48,18 +48,19 @@ class LikedSongsRepository {
                     )
                 )
             Log.d(TAG, "Successfully liked song $songId")
+            return true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to like song $songId", e)
+            return false
         }
-
     }
 
-    suspend fun unlikeSong(songId: String) {
+    suspend fun unlikeSong(songId: String): Boolean {
         val currentUser = client.auth.currentUserOrNull()
 
         if (currentUser == null) {
             Log.d(TAG, "User not authenticated")
-            return
+            return false
         }
 
         try {
@@ -71,8 +72,10 @@ class LikedSongsRepository {
                     }
                 }
             Log.d(TAG, "Successfully unliked song $songId")
+            return true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to unlike song $songId", e)
+            return false
         }
     }
 }
