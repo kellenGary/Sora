@@ -43,7 +43,6 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
                 }
                 
                 val playlistDetails = spotifyService.getPlaylistDetails(accessToken, playlistId)
-                System.out.println("id" + playlistDetails.id)
 
                 _uiState.value = _uiState.value.copy(
                     playlist = playlistDetails,

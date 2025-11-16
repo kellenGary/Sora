@@ -31,6 +31,7 @@ import com.example.sora.auth.SpotifyTokenRefresher
 import com.example.sora.features.SpotifyAuthManager
 import com.example.sora.friends.FriendScreen
 import com.example.sora.library.playlists.PlaylistScreen
+import com.example.sora.library.songs.SongScreen
 import com.example.sora.map.MapScreen
 import com.example.sora.playback.PlaybackViewModel
 import com.example.sora.playback.ui.ExpandedPlayer
@@ -43,6 +44,7 @@ import com.example.sora.ui.settings.optionScreens.ChangePasswordScreen
 import com.example.sora.ui.settings.SettingScreen
 import com.example.sora.ui.settings.optionScreens.LinkedAccountScreen
 import com.example.sora.utils.PermissionHandler
+import com.example.sora.viewmodel.FriendsViewModel
 import com.example.sora.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,21 +82,21 @@ class MainActivity : ComponentActivity() {
                 // If user has stored credentials but isn't logged in, do full auto-login
                 if (tokenManager.hasStoredCredentials() && !authViewModel.uiState.value.isLoggedIn) {
                     Log.d(TAG, "Found stored credentials, attempting auto-login to Supabase")
-                    
+
                     val email = tokenManager.getUserEmail()
                     val password = tokenManager.getSupabasePassword()
-                    
+
                     if (email != null && password != null) {
                         // First, sign into Supabase to establish session
                         CoroutineScope(Dispatchers.Main).launch {
                             val authRepository = com.example.sora.auth.AuthRepository(this@MainActivity)
                             authRepository.signIn(email, password).onSuccess {
                                 Log.d(TAG, "Successfully logged into Supabase, now refreshing Spotify token")
-                                
+
                                 // Now refresh Spotify token
                                 SpotifyTokenRefresher.refreshAccessToken(this@MainActivity).onSuccess { tokenResponse ->
                                     Log.d(TAG, "Spotify token refreshed successfully")
-                                    
+
                                     // Update AuthViewModel state with refreshed tokens
                                     authViewModel.handleLocalTokenRefresh(
                                         tokenResponse.accessToken,
@@ -125,14 +127,14 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(authViewModel.uiState.value.isLoggedIn, authViewModel.uiState.value.isSpotifyConnected) {
                 if (authViewModel.uiState.value.isLoggedIn && authViewModel.uiState.value.isSpotifyConnected) {
                     Log.d(TAG, "User logged in and Spotify connected - checking permissions")
-                    
+
                     // Request permissions if needed
                     if (!PermissionHandler.hasLocationPermission(this@MainActivity) ||
                         !PermissionHandler.hasNotificationPermission(this@MainActivity)) {
                         Log.d(TAG, "Requesting permissions")
                         PermissionHandler.requestAllPermissions(this@MainActivity)
                     }
-                    
+
                     // Start service
                     Log.d(TAG, "Starting song tracking service")
                     SongTrackingService.start(this@MainActivity)
@@ -145,18 +147,6 @@ class MainActivity : ComponentActivity() {
 
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-
-            // Determine start destination based on stored credentials
-            val startDestination = if (tokenManager.hasStoredCredentials()) "main" else "login"
-            
-            // Navigate to main screen once login completes
-            LaunchedEffect(authViewModel.uiState.value.isLoggedIn) {
-                if (authViewModel.uiState.value.isLoggedIn && currentRoute == "login") {
-                    navController.navigate("main") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                }
-            }
             
             Box(modifier = Modifier.fillMaxSize()) {
                 Scaffold(
@@ -164,7 +154,7 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                 NavHost(
                     navController = navController,
-                    startDestination = startDestination,
+                    startDestination = "login",
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
@@ -181,18 +171,20 @@ class MainActivity : ComponentActivity() {
                     composable("library") {
                         LibraryScreen(navController)
                     }
-                    composable("playlist",
-                        arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
-                    ) {
-                        val playlistId = it.arguments?.getString("playlistId")
-                        PlaylistScreen(navController, playlistId = playlistId)
-                    }
                     composable(
                         route = "playlist/{playlistId}",
                         arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
                     ) { backStackEntry ->
                         val playlistId = backStackEntry.arguments?.getString("playlistId")
                         PlaylistScreen(navController, playlistId = playlistId )
+                    }
+                    composable(
+                        route = "song/{songId}",
+                        arguments = listOf(navArgument("songId"){ type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val songId = backStackEntry.arguments?.getString("songId")
+                        System.out.println(songId)
+                        SongScreen(navController, songId = songId)
                     }
                     composable("friends") {
                         FriendScreen(navController)
@@ -210,14 +202,18 @@ class MainActivity : ComponentActivity() {
                         ExpandedPlayer(navController, playbackViewModel)
                     }
                     composable(
-                        route="profile/{userId}",
-                        arguments = listOf(navArgument("userId") { type =
-                            NavType.StringType })
+                        route="profile?userId={userId}",
+                        arguments = listOf(navArgument("userId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
                     ) {  backStackEntry ->
-                        // TODO: Shouldnt fail this next userID
-                        val userId = backStackEntry.arguments?.getString("userId") ?: "user"
+                        val userIdArg = backStackEntry.arguments?.getString("userId")
                         ProfileScreen(
-                            userId = userId,
+                            navController = navController,
+                            userId = userIdArg,
                             profileViewModel = profileViewModel
                         )
                     }

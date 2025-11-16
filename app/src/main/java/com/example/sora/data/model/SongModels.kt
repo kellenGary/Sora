@@ -77,3 +77,44 @@ data class ListenHistory(
     @SerialName("created_at")
     val createdAt: String? = null
 )
+
+@Serializable
+data class FullHistoryRow(
+    val history_id: String,
+    val user_id: String,
+    val song_id: String,
+    val latitude: Double,
+    val longitude: Double,
+    val timestamp: Long,
+
+    val song_title: String,
+    val artist_id: String,
+    val album_id: String,
+
+    val artist_name: String,
+    val artist_link: String,
+
+    val album_name: String,
+    val album_cover: String? = null,
+    val album_link: String,
+    val album_release_date: String? = null
+)
+
+@Serializable
+data class UniqueSongCount(
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("unique_song_count")
+    val uniqueSongCount: Int
+)
+
+@Serializable
+data class LikedSongFull(
+    val liked_id: Int,
+    val user_id: String,
+    val song_id: String,
+    val song_title: String,
+    val artist_name: String,
+    val album_name: String,
+    val album_cover: String? = null
+)

@@ -1,6 +1,7 @@
 package com.example.sora.library.playlists
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,7 +37,7 @@ fun PlaylistScreen (
     navController: NavController? = null,
     playlistViewModel: PlaylistViewModel = viewModel(),
     playlistId: String?
-){
+) {
     val uiState by playlistViewModel.uiState.collectAsState()
     LaunchedEffect(playlistId) {
         playlistViewModel.loadPlaylistDetails(playlistId)
@@ -95,16 +96,18 @@ fun PlaylistScreen (
         // --- Songs list ---
         playlist?.tracks?.total?.let {
             items(it) { trackItem ->
-                SongRow(playlist.tracks.items[trackItem].track)
+                SongRow(playlist.tracks.items[trackItem].track, modifier = Modifier.clickable {
+                    navController?.navigate("song/${playlist.tracks.items[trackItem].track.id}")
+                })
             }
         }
     }
 }
 
 @Composable
-fun SongRow(song: Track?) {
+fun SongRow(song: Track?, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically

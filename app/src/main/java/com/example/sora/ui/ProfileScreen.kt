@@ -28,18 +28,27 @@ import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.example.sora.R
 import com.example.sora.viewmodel.IProfileViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 
-// TODO: Edit this when we are pulling real song data from spotify, may need to change structure
-data class Song(
+data class SongUi(
     val id: String,
     val title: String,
     val artist: String,
-    val albumArtUrl: String?
+    val albumArtUrl: String?,
+    val isLiked: Boolean = false
 )
 
 private const val TAG = "ProfileScreen"
@@ -49,13 +58,14 @@ private const val TAG = "ProfileScreen"
  */
 @Composable
 fun ProfileScreen(
-    userId: String,
+    navController: NavController,
+    userId: String?,
     profileViewModel: IProfileViewModel,
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        profileViewModel.loadProfile(null)
+        profileViewModel.loadProfile(userId)
         Log.d(TAG, "ProfileScreen Composed for user: ${uiState.displayName}")
     }
 
@@ -73,22 +83,37 @@ fun ProfileScreen(
         }
     )
 
+    val onPfpClickHandler = if (uiState.isPersonalProfile) {
+        Modifier.clickable { photoPickerLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        ) }
+    } else {
+        Modifier
+    }
+
+
+
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(18.dp, 15.dp)
+            .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
     ) {
         // Top container for profile info
         item {
             ProfileHeader(
                 username = uiState.displayName ?: "User",
                 pfpUrl = uiState.avatarUrl,
-                onPfpClick = {
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
+                modifier = onPfpClickHandler,
+                subHeadingText = "${uiState.uniqueSongs} unique songs played",
+                isPersonalProfile = uiState.isPersonalProfile,
+                isFollowed = uiState.isFollowed,
+                handleFollowClick = {
+                    if (uiState.isFollowed) profileViewModel.unfollow(userId!!)
+                    else profileViewModel.follow(userId!!)
                 },
-                subHeadingText = "${uiState.uniqueSongs} unique songs played"
+                navController = navController
             )
         }
 
@@ -96,7 +121,8 @@ fun ProfileScreen(
         item {
             ExpandableSongSection(
                 title = "Listening History",
-                songs = uiState.listeningHistory
+                songs = uiState.listeningHistory,
+                profileViewModel = profileViewModel
             )
         }
 
@@ -104,7 +130,8 @@ fun ProfileScreen(
         item {
             ExpandableSongSection(
                 title = "Likes",
-                songs = uiState.likedSongs
+                songs = uiState.likedSongs,
+                profileViewModel = profileViewModel
             )
         }
     }
@@ -117,52 +144,89 @@ fun ProfileScreen(
 fun ProfileHeader(
     username: String,
     pfpUrl: Any?,
-    onPfpClick: () -> Unit,
-    subHeadingText: String
+    modifier: Modifier,
+    subHeadingText: String,
+    isPersonalProfile: Boolean,
+    isFollowed: Boolean,
+    handleFollowClick: () -> Unit,
+    navController: NavController
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        AsyncImage(
-            model = pfpUrl,
-            contentDescription = "Profile Picture",
-            placeholder = ColorPainter(Color(0xFFD9D9D9)),
-            error = ColorPainter(Color(0xFFD9D9D9)),
-            contentScale = ContentScale.Crop,
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
             modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(Color.LightGray)
-                .clickable { onPfpClick() }
-        )
-
-        // Spacer between image and text
-        Spacer(modifier = Modifier.width(10.dp))
-
-        // Column for Username and Subheading
-        Column(
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Username
-            Text(
-                text = username,
-                fontWeight = FontWeight.W700,
-                fontSize = 16.sp
+            AsyncImage(
+                model = pfpUrl,
+                contentDescription = "Profile Picture",
+                placeholder = ColorPainter(Color(0xFFD9D9D9)),
+                error = ColorPainter(Color(0xFFD9D9D9)),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray)
+                    .then(modifier)
             )
 
-            // Spacer
-            Spacer(modifier = Modifier.height(4.dp))
+            // Spacer between image and text
+            Spacer(modifier = Modifier.width(10.dp))
 
-            // Subheading text
-            Text(
-                text = subHeadingText,
-                fontWeight = FontWeight.W300,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
+            // Column for Username and Subheading
+            Column(
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Username
+                Text(
+                    text = username,
+                    fontWeight = FontWeight.W700,
+                    fontSize = 16.sp
+                )
+
+                // Spacer
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Subheading text
+                Text(
+                    text = subHeadingText,
+                    fontWeight = FontWeight.W300,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
+                if (!isPersonalProfile) {
+                    Spacer(Modifier.height(8.dp))
+
+                    // TODO: Check if following user or not
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color.DarkGray)
+                            .clickable { handleFollowClick() }
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = if(isFollowed) "Unfollow" else "Follow",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.W600
+                        )
+                    }
+                }
+            }
+        }
+        if (isPersonalProfile) {
+            IconButton(
+                onClick = { navController.navigate("settings") },
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_settings_24),
+                    contentDescription = "Settings"
+                )
+            }
         }
     }
 }
@@ -174,7 +238,8 @@ fun ProfileHeader(
 @Composable
 fun ExpandableSongSection(
     title: String,
-    songs: List<Song>,
+    songs: List<SongUi>,
+    profileViewModel: IProfileViewModel,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -217,6 +282,7 @@ fun ExpandableSongSection(
             displayedSongs.forEach { song ->
                 SongCard(
                     song = song,
+                    onLikeToggle = { s, _ -> profileViewModel.toggleLike(s) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -231,9 +297,11 @@ fun ExpandableSongSection(
  */
 @Composable
 fun SongCard(
-    song: Song,
+    song: SongUi,
+    onLikeToggle: (SongUi, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
+
     // Card container
     Box(
         modifier = modifier
@@ -280,6 +348,23 @@ fun SongCard(
                     fontWeight = FontWeight.W300,
                     color = Color.Black
                 )
+
+                // Heart Icon at bottom right
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentSize(Alignment.BottomEnd)
+                ) {
+                    IconButton(
+                        onClick = { onLikeToggle(song, !song.isLiked) }
+                    ) {
+                        Icon(
+                            imageVector = if (song.isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = if (song.isLiked) "Unlike" else "Like",
+                            tint = if (song.isLiked) Color.Red else Color.Gray
+                        )
+                    }
+                }
             }
         }
 
@@ -294,26 +379,27 @@ fun SongCard(
 @Composable
 fun ProfileScreenPreview() {
     val fakeHistory = listOf(
-        Song("1", "Bohemian Rhapsody", "Queen", null),
-        Song("2", "Stairway to Heaven", "Led Zeppelin", null),
-        Song("3", "Hotel California", "Eagles", null),
-        Song("4", "Smells Like Teen Spirit", "Nirvana", null)
+        SongUi("1", "Bohemian Rhapsody", "Queen", null),
+        SongUi("2", "Stairway to Heaven", "Led Zeppelin", null),
+        SongUi("3", "Hotel California", "Eagles", null),
+        SongUi("4", "Smells Like Teen Spirit", "Nirvana", null)
     )
 
     val fakeLikes = listOf(
-        Song("5", "Blinding Lights", "The Weeknd", null),
-        Song("6", "As It Was", "Harry Styles", null),
-        Song("7", "good 4 u", "Olivia Rodrigo", null),
-        Song("8", "Levitating", "Dua Lipa", null)
+        SongUi("5", "Blinding Lights", "The Weeknd", null),
+        SongUi("6", "As It Was", "Harry Styles", null),
+        SongUi("7", "good 4 u", "Olivia Rodrigo", null),
+        SongUi("8", "Levitating", "Dua Lipa", null)
     )
 
     // --- Mock ViewModel implementing IProfileViewModel ---
-    val fakeViewModel = object : com.example.sora.viewmodel.IProfileViewModel {
+    val fakeViewModel = object : IProfileViewModel {
         override val uiState = kotlinx.coroutines.flow.MutableStateFlow(
             com.example.sora.viewmodel.ProfileUiState(
                 displayName = "Ricky Bobby",
                 avatarUrl = null,
                 uniqueSongs = 142,
+                isPersonalProfile = false,
                 listeningHistory = fakeHistory,
                 likedSongs = fakeLikes
             )
@@ -326,11 +412,24 @@ fun ProfileScreenPreview() {
         override fun updateAvatar(context: android.content.Context, uri: android.net.Uri) {
             // No-op for preview
         }
+
+        override fun toggleLike(song: SongUi) {
+            // No-op for preview
+        }
+
+        override fun follow(userId: String) {
+            // No-op for preview
+        }
+
+        override fun unfollow(userId: String) {
+            // No-op for preview
+        }
     }
 
     // --- Call the screen with the fake ViewModel ---
     ProfileScreen(
-        userId = "12345",
+        navController = rememberNavController(),
+        userId = "",
         profileViewModel = fakeViewModel
     )
 }
