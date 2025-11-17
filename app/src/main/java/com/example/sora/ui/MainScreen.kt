@@ -95,43 +95,6 @@ fun MainScreen(
                             color = MaterialTheme.colorScheme.onPrimary,
                             letterSpacing = 0.5.sp
                         )
-                        
-                        // Notifications button
-                        Box {
-                            IconButton(
-                                onClick = { 
-                                    navController.navigate("notifications")
-                                },
-                                modifier = Modifier
-                                    .background(
-                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Notifications,
-                                    contentDescription = "Notifications",
-                                    tint = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                            
-                            // Red badge for unread notifications
-                            val hasUnreadNotifications = true // TODO: Replace with actual unread count
-                            
-                            if (hasUnreadNotifications) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .shadow(2.dp, RoundedCornerShape(6.dp))
-                                        .background(
-                                            color = Color(0xFFFF3B30),
-                                            shape = RoundedCornerShape(6.dp)
-                                        )
-                                        .align(Alignment.TopEnd)
-                                        .offset(x = (-6).dp, y = 6.dp)
-                                )
-                            }
-                        }
                     }
                     
                     // Mini Map Section
