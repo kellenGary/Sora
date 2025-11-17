@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -16,11 +17,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.sora.auth.AuthViewModel
@@ -53,37 +56,98 @@ fun MainScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(Color(0xFFFFFFFF)),
         contentPadding = PaddingValues(bottom = 160.dp)
     ) {
         item {
-            // Header
-            Text(
-                text = "Welcome to Sora",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-        
-        item {
-            // Mini Map Section
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {                
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(bottomEnd = 32.dp, bottomStart = 32.dp)
+                    )
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.secondary,
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.85f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(bottomEnd = 16.dp, bottomStart = 16.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    MiniMapScreen(navController = navController)
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Sora",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            letterSpacing = 0.5.sp
+                        )
+                        
+                        // Notifications button
+                        Box {
+                            IconButton(
+                                onClick = { 
+                                    navController.navigate("notifications")
+                                },
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = "Notifications",
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                            
+                            // Red badge for unread notifications
+                            val hasUnreadNotifications = true // TODO: Replace with actual unread count
+                            
+                            if (hasUnreadNotifications) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .shadow(2.dp, RoundedCornerShape(6.dp))
+                                        .background(
+                                            color = Color(0xFFFF3B30),
+                                            shape = RoundedCornerShape(6.dp)
+                                        )
+                                        .align(Alignment.TopEnd)
+                                        .offset(x = (-6).dp, y = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Mini Map Section
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .shadow(4.dp, RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(20.dp))
+                    ) {
+                        MiniMapScreen(navController = navController)
+                    }
                 }
             }
         }
+
         
         // Feed loading/error/empty states
         when {
@@ -155,7 +219,7 @@ fun MainScreen(
             items = feedUiState.posts,
             key = { post -> post.id }
         ) { post ->
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+            Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
                 FeedPostItem(
                     post = post,
                     onClick = {
