@@ -58,7 +58,7 @@ fun MiniMapScreen(
     LaunchedEffect(locationState.currentLocation) {
         locationState.currentLocation?.let { location ->
             println("MiniMapScreen: Setting camera position to: $location")
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 13f)
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 16f)
         }
     }
 
@@ -147,22 +147,6 @@ fun MiniMapScreen(
                         navController?.navigate("map")
                     }
             )
-            // Overlay label
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .background(
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                        shape = RoundedCornerShape(topStart = 8.dp)
-                    )
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = "View Map",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
         }
     }
 

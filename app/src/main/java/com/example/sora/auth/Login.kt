@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -69,47 +71,43 @@ fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            
             // Sora Logo
             Image(
                 painter = painterResource(id = R.drawable.sora),
                 contentDescription = "Sora logo",
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 48.dp)
+                    .fillMaxWidth(0.7f)
             )
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) { 
                 Text(
                     text = "Welcome to Sora",
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    modifier = Modifier.padding(top = 24.dp)
+                    color = Color.White
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Connect with friends and discover what music is playing around you",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF94A3B8), // slate-400
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp)
+                    color = Color(0xFF94A3B8),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
 
-            
             // Feature Cards
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Friends' Listening History Card
                 Card(
@@ -268,6 +266,8 @@ fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel
                 }
             }
             
+            Spacer(modifier = Modifier.height(8.dp))
+            
             // Login Button
         Button(
             onClick = {
@@ -303,6 +303,8 @@ fun Login(navController: NavController, authViewModel: AuthViewModel = viewModel
                 Text("Login with Spotify", color = Color.White)
             }
         }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
         
         // Show error message if any - positioned at bottom of Box

@@ -43,32 +43,6 @@ fun MainScreen(
             style = MaterialTheme.typography.headlineMedium
         )
         MiniMapScreen(navController = navController)
-
-        Button(
-            onClick = {
-                // Get Username
-                // TODO: This should be a saved username not the email
-                val currentUser = AuthRepository().getCurrentUser()
-                val userEmail = currentUser?.identities?.firstOrNull()?.identityData?.jsonObject?.get("email")?.jsonPrimitive?.content
-                val username = userEmail?.substringBefore('@') ?: "user"
-                navController.navigate("profile/$username")
-            }
-        ) {
-             Text("Go to Profile")
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                authViewModel.signOut()
-                navController.navigate("login") {
-                    popUpTo(0) { inclusive = true }
-                }
-            }
-        ) {
-            Text("Sign Out")
-        }
     }
 }
 
