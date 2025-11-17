@@ -25,7 +25,22 @@ fun MapScreen(
     val context = LocalContext.current
     val locationState by mapViewModel.locationState.collectAsState()
     val songLocations by mapViewModel.songLocations.collectAsState()
-    var selectedSong by remember { mutableStateOf<SongLocation?>(null) }
+    var selectedSongs by remember { mutableStateOf<List<SongLocation>>(emptyList()) }
+    
+    // Group songs by location (considering songs within 50 meters as same location)
+    fun getSongsAtLocation(location: LatLng, radius: Double = 50.0): List<SongLocation> {
+        return songLocations.filter { song ->
+            val results = FloatArray(1)
+            android.location.Location.distanceBetween(
+                song.location.latitude,
+                song.location.longitude,
+                location.latitude,
+                location.longitude,
+                results
+            )
+            results[0] <= radius
+        }
+    }
 
     // Permission launcher
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -52,14 +67,18 @@ fun MapScreen(
         }
     }
 
-    // Camera position state - update instantly to user location (no animation)
+    // Camera position state - update only once when location is first obtained
     val cameraPositionState = rememberCameraPositionState()
+    var hasInitializedCamera by remember { mutableStateOf(false) }
     
-    // Update camera position instantly when user location changes
+    // Update camera position only on first location update
     LaunchedEffect(locationState.currentLocation) {
         locationState.currentLocation?.let { location ->
-            println("MapScreen: Setting camera position to: $location")
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 13f)
+            if (!hasInitializedCamera) {
+                println("MapScreen: Setting initial camera position to: $location")
+                cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 16f)
+                hasInitializedCamera = true
+            }
         }
     }
 
@@ -67,8 +86,8 @@ fun MapScreen(
     val uiSettings by remember {
         mutableStateOf(
             MapUiSettings(
-                zoomControlsEnabled = false,
-                zoomGesturesEnabled = false,
+                zoomControlsEnabled = false, // Hide +/- buttons
+                zoomGesturesEnabled = true, // Keep pinch-to-zoom
                 scrollGesturesEnabled = true,
                 tiltGesturesEnabled = true,
                 rotationGesturesEnabled = true,
@@ -105,7 +124,9 @@ fun MapScreen(
             properties = mapProperties,
             uiSettings = uiSettings
         ) {
-            // Display song locations as circles
+            // Display song locations as circles with uniform size
+            val uniformRadius = 150.0 // Fixed radius in meters for all songs
+            
             songLocations.forEach { songLocation ->
                 // Generate colors for each circle
                 val colors = listOf(
@@ -125,36 +146,39 @@ fun MapScreen(
                 
                 Circle(
                     center = songLocation.location,
-                    radius = songLocation.radiusMeters,
+                    radius = uniformRadius,
                     fillColor = circleColor,
                     strokeColor = Color(0xAAFFFFFF),
                     strokeWidth = 3f,
+                    clickable = true,
                     onClick = {
-                        selectedSong = songLocation
+                        val songsAtLocation = getSongsAtLocation(songLocation.location, uniformRadius)
+                        selectedSongs = songsAtLocation
                     }
                 )
                 
-                // Add an invisible small marker at the center for click detection
+                // Add a marker at the center for better click detection
                 Marker(
                     state = MarkerState(position = songLocation.location),
-                    alpha = 0f, // Make it completely transparent
+                    alpha = 0f,
                     onClick = {
-                        selectedSong = songLocation
-                        true // Consume the click event
+                        val songsAtLocation = getSongsAtLocation(songLocation.location, uniformRadius)
+                        selectedSongs = songsAtLocation
+                        true
                     }
                 )
             }
         }
 
-        // Show song details popup when a song is selected
-        selectedSong?.let { song ->
-            SongDetailsPopup(
-                song = song,
-                onDismiss = { selectedSong = null },
-                onViewSong = {
+        // Show song details popup when songs are selected
+        if (selectedSongs.isNotEmpty()) {
+            SongListPopup(
+                songs = selectedSongs,
+                onDismiss = { selectedSongs = emptyList() },
+                onViewSong = { song ->
                     // Navigate to song details
                     navController?.navigate("song/${song.id}")
-                    selectedSong = null
+                    selectedSongs = emptyList()
                 }
             )
         }

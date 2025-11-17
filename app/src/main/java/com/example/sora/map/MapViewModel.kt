@@ -4,23 +4,28 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.sora.data.repository.MapRepository
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class LocationState(
     val currentLocation: LatLng? = null,
     val hasLocationPermission: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
 )
 
 class MapViewModel : ViewModel() {
+    private val mapRepository = MapRepository()
+    
     private val _locationState = MutableStateFlow(LocationState())
     val locationState: StateFlow<LocationState> = _locationState.asStateFlow()
 
@@ -59,10 +64,10 @@ class MapViewModel : ViewModel() {
                     isLoading = false
                 )
                 
-                // Generate dummy song locations with last known location
+                // Fetch friends' listening history when we get location
                 if (_songLocations.value.isEmpty()) {
-                    println("MapViewModel: Generating songs from last known location...")
-                    generateDummySongLocations(userLocation)
+                    println("MapViewModel: Fetching friends' listening history...")
+                    fetchFriendsListeningHistory()
                 }
             }
         }
@@ -84,10 +89,10 @@ class MapViewModel : ViewModel() {
                         isLoading = false
                     )
                     
-                    // Generate dummy song locations when we first get the user's location
+                    // Fetch friends' listening history when we first get the user's location
                     if (_songLocations.value.isEmpty()) {
-                        println("MapViewModel: Song locations empty, generating...")
-                        generateDummySongLocations(userLocation)
+                        println("MapViewModel: Song locations empty, fetching...")
+                        fetchFriendsListeningHistory()
                     } else {
                         println("MapViewModel: Already have ${_songLocations.value.size} song locations")
                     }
@@ -110,21 +115,32 @@ class MapViewModel : ViewModel() {
         }
     }
 
-    fun generateDummySongLocations(centerLocation: LatLng) {
-        println("MapViewModel: Generating dummy song locations at $centerLocation")
-        println("MapViewModel: Current song locations before: ${_songLocations.value.size}")
-        val dummyLocations = SongLocationGenerator.generateDummyLocations(
-            centerLocation = centerLocation,
-            count = 15,
-            maxDistanceMeters = 5000.0
-        )
-        println("MapViewModel: Generated ${dummyLocations.size} locations")
-        dummyLocations.forEach { 
-            println("MapViewModel: Song location - ${it.songTitle} at ${it.location}, radius ${it.radiusMeters}m")
+    fun fetchFriendsListeningHistory() {
+        println("MapViewModel: Fetching friends' listening history from Supabase")
+        viewModelScope.launch {
+            _locationState.value = _locationState.value.copy(isLoading = true, errorMessage = null)
+            
+            val result = mapRepository.getFriendsListeningHistory()
+            
+            result.onSuccess { locations ->
+                println("MapViewModel: Successfully fetched ${locations.size} song locations")
+                locations.forEach { location ->
+                    println("MapViewModel: Song location - ${location.songTitle} by ${location.artist} at ${location.location}")
+                }
+                _songLocations.value = locations
+                _locationState.value = _locationState.value.copy(isLoading = false)
+            }.onFailure { error ->
+                println("MapViewModel: Error fetching song locations: ${error.message}")
+                _locationState.value = _locationState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Failed to load friends' music: ${error.message}"
+                )
+            }
         }
-        _songLocations.value = dummyLocations
-        println("MapViewModel: Current song locations after: ${_songLocations.value.size}")
-        println("MapViewModel: StateFlow value: ${songLocations.value.size}")
+    }
+    
+    fun refreshListeningHistory() {
+        fetchFriendsListeningHistory()
     }
 
     override fun onCleared() {

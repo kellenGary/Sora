@@ -82,21 +82,21 @@ class MainActivity : ComponentActivity() {
                 // If user has stored credentials but isn't logged in, do full auto-login
                 if (tokenManager.hasStoredCredentials() && !authViewModel.uiState.value.isLoggedIn) {
                     Log.d(TAG, "Found stored credentials, attempting auto-login to Supabase")
-                    
+
                     val email = tokenManager.getUserEmail()
                     val password = tokenManager.getSupabasePassword()
-                    
+
                     if (email != null && password != null) {
                         // First, sign into Supabase to establish session
                         CoroutineScope(Dispatchers.Main).launch {
                             val authRepository = com.example.sora.auth.AuthRepository(this@MainActivity)
                             authRepository.signIn(email, password).onSuccess {
                                 Log.d(TAG, "Successfully logged into Supabase, now refreshing Spotify token")
-                                
+
                                 // Now refresh Spotify token
                                 SpotifyTokenRefresher.refreshAccessToken(this@MainActivity).onSuccess { tokenResponse ->
                                     Log.d(TAG, "Spotify token refreshed successfully")
-                                    
+
                                     // Update AuthViewModel state with refreshed tokens
                                     authViewModel.handleLocalTokenRefresh(
                                         tokenResponse.accessToken,
@@ -127,14 +127,14 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(authViewModel.uiState.value.isLoggedIn, authViewModel.uiState.value.isSpotifyConnected) {
                 if (authViewModel.uiState.value.isLoggedIn && authViewModel.uiState.value.isSpotifyConnected) {
                     Log.d(TAG, "User logged in and Spotify connected - checking permissions")
-                    
+
                     // Request permissions if needed
                     if (!PermissionHandler.hasLocationPermission(this@MainActivity) ||
                         !PermissionHandler.hasNotificationPermission(this@MainActivity)) {
                         Log.d(TAG, "Requesting permissions")
                         PermissionHandler.requestAllPermissions(this@MainActivity)
                     }
-                    
+
                     // Start service
                     Log.d(TAG, "Starting song tracking service")
                     SongTrackingService.start(this@MainActivity)
@@ -147,18 +147,6 @@ class MainActivity : ComponentActivity() {
 
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-
-            // Determine start destination based on stored credentials
-            val startDestination = if (tokenManager.hasStoredCredentials()) "main" else "login"
-            
-            // Navigate to main screen once login completes
-            LaunchedEffect(authViewModel.uiState.value.isLoggedIn) {
-                if (authViewModel.uiState.value.isLoggedIn && currentRoute == "login") {
-                    navController.navigate("main") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                }
-            }
             
             Box(modifier = Modifier.fillMaxSize()) {
                 Scaffold(
@@ -166,7 +154,7 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                 NavHost(
                     navController = navController,
-                    startDestination = startDestination,
+                    startDestination = "login",
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
