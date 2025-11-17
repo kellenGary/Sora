@@ -6,6 +6,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -16,6 +17,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -48,21 +51,47 @@ fun MiniPlayer(
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it })
     ) {
-        Card(
+        Box(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)
-                .height(72.dp)
-                .clickable(onClick = onExpand),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.background
-            )
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .shadow(8.dp, RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .clickable(onClick = onExpand)
         ) {
+            // Album art background (blurred effect simulation)
+            uiState.track?.album?.images?.firstOrNull()?.url?.let { imageUrl ->
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp),
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.3f
+                )
+            }
+            
+            // Gradient overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+                            )
+                        )
+                    )
+            )
+            
             Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -73,21 +102,29 @@ fun MiniPlayer(
                         contentDescription = "Album art",
                         modifier = Modifier
                             .size(56.dp)
-                            .clip(RoundedCornerShape(4.dp)),
+                            .shadow(4.dp, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp)),
                         contentScale = ContentScale.Crop
                     )
                 } ?: run {
-                    // Placeholder if no album art
                     Box(
                         modifier = Modifier
                             .size(56.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                            .shadow(4.dp, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    )
+                                )
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "♪",
-                            style = MaterialTheme.typography.headlineMedium,
+                            fontSize = 24.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -101,15 +138,15 @@ fun MiniPlayer(
                     Text(
                         text = uiState.track?.name ?: "Unknown Track",
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = uiState.track?.artists?.joinToString(", ") { it.name } ?: "Unknown Artist",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -117,41 +154,54 @@ fun MiniPlayer(
                 }
                 
                 // Play/Pause button
-                IconButton(
-                    onClick = { playbackViewModel.togglePlayPause() },
-                    enabled = !uiState.isLoading,
-                    modifier = Modifier.size(40.dp)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .shadow(2.dp, CircleShape)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                )
+                            ),
+                            shape = CircleShape
+                        )
+                        .clickable(
+                            enabled = !uiState.isLoading,
+                            onClick = { playbackViewModel.togglePlayPause() }
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
                         if (uiState.isPlaying) {
-                            // Pause icon - two vertical bars
+                            // Pause icon
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.size(24.dp)
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .width(5.dp)
-                                        .height(20.dp)
+                                        .width(4.dp)
+                                        .height(18.dp)
                                         .background(
-                                            MaterialTheme.colorScheme.primary,
-                                            RoundedCornerShape(1.dp)
+                                            MaterialTheme.colorScheme.onPrimary,
+                                            RoundedCornerShape(2.dp)
                                         )
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .width(5.dp)
-                                        .height(20.dp)
+                                        .width(4.dp)
+                                        .height(18.dp)
                                         .background(
-                                            MaterialTheme.colorScheme.primary,
-                                            RoundedCornerShape(1.dp)
+                                            MaterialTheme.colorScheme.onPrimary,
+                                            RoundedCornerShape(2.dp)
                                         )
                                 )
                             }
@@ -160,7 +210,7 @@ fun MiniPlayer(
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
                                 contentDescription = "Play",
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(32.dp)
                             )
                         }

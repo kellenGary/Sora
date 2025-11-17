@@ -78,7 +78,7 @@ fun SongListPopup(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 20.dp, start = 16.dp, end = 16.dp, bottom = 140.dp)
+                        .padding(top = 20.dp, start = 16.dp, end = 16.dp)
                 ) {
                     // Header
                     Row(
@@ -126,7 +126,7 @@ fun SongListPopup(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp),
+                            .height(300.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         items(songs) { song ->
