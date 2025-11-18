@@ -118,3 +118,33 @@ data class LikedSongFull(
     val album_name: String,
     val album_cover: String? = null
 )
+
+@Serializable
+data class FeedActivity(
+    val id: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("display_name") val userName: String?,
+    @SerialName("avatar_url") val userAvatar: String?,
+    @SerialName("song_title") val songTitle: String,
+    val artist: String,
+    @SerialName("album_cover") val albumCover: String? = null,
+    val timestamp: Long,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    @SerialName("activity_type") val activityType: String
+)
+
+@Serializable
+data class RawFeedActivity(
+    val id: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("display_name") val userName: String?,
+    @SerialName("avatar_url") val userAvatar: String?,
+    @SerialName("song_title") val songTitle: String,
+    val artist: String,
+    @SerialName("album_cover") val albumCover: String? = null,
+    val timestamp: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    @SerialName("activity_type") val activityType: String
+)
