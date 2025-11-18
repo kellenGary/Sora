@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.sora.data.model.FeedActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -137,7 +138,7 @@ fun FeedScreen(
 
 @Composable
 fun FeedPostItem(
-    post: FeedPost,
+    post: FeedActivity,
     onClick: () -> Unit
 ) {
     Card(
@@ -256,6 +257,19 @@ fun FeedPostItem(
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
                         )
+
+                        val activityText = when (post.activityType.uppercase()) {
+                            "LIKE" -> "liked this song"
+                            "LISTEN" -> "recently listened"
+                            else -> "did something"
+                        }
+
+                        Text(
+                            text = activityText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+
                         Text(
                             text = getRelativeTimeString(post.timestamp),
                             style = MaterialTheme.typography.bodySmall,

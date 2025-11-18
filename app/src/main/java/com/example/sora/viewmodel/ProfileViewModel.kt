@@ -83,10 +83,13 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
             val profile = userRepository.getUser(idToLoad)
 
-            val likedSongsUi = likedSongsRepository.getLikedSongs(idToLoad)
-
+            val likedSongsRaw = likedSongsRepository.getLikedSongs(idToLoad)
             val personalLikedSongs = likedSongsRepository.getLikedSongs(currentUserId)
             val likedSongIdsSet = personalLikedSongs.map { it.id }.toSet()
+
+            val likedSongsUi = likedSongsRaw.map { song ->
+                song.copy(isLiked = likedSongIdsSet.contains(song.id))
+            }
 
             val fullHistory = userStatsRepository.getFullListeningHistory(
                 userId = idToLoad,
@@ -117,7 +120,6 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                 uniqueSongs = uniqueSongs,
                 isPersonalProfile = (currentUserId == idToLoad),
                 isFollowed = isFollowed,
-                // TODO: populate uniqueSongs, listeningHistory, likedSongs if available
             )
             Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
         }
@@ -152,7 +154,10 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
                 }
                 currentLikes
             } else {
-                _uiState.value.likedSongs // leave as is
+                _uiState.value.likedSongs.map {
+                    if (it.id == song.id) it.copy(isLiked = !it.isLiked)
+                    else it
+                }
             }
 
             _uiState.value = _uiState.value.copy(

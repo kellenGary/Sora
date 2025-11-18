@@ -2,13 +2,14 @@ package com.example.sora.feed
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sora.data.model.FeedActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class FeedUiState(
-    val posts: List<FeedPost> = emptyList(),
+    val posts: List<FeedActivity> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isRefreshing: Boolean = false
