@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.sora.ui.theme.MontserratFontFamily
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
@@ -40,6 +41,7 @@ fun MutualFriendsRow(mutualFriends: List<MutualFriend>) {
         }
         Text(
             text = summary,
+            fontFamily = MontserratFontFamily,
             fontSize = 11.sp,
             color = Color.Gray,
             modifier = Modifier.padding(start = 8.dp)

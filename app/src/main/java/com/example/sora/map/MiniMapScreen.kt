@@ -97,8 +97,7 @@ fun MiniMapScreen(
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp)
+            .clip(RoundedCornerShape(26.dp)),
     ) {
         Box(
             modifier = Modifier

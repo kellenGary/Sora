@@ -22,6 +22,8 @@ object SpotifyTokenRefresher {
         val refreshToken: String? = null
     )
     
+    class RefreshTokenRevokedException(message: String) : Exception(message)
+    
     suspend fun refreshAccessToken(context: Context): Result<TokenResponse> = withContext(Dispatchers.IO) {
         try {
             val tokenManager = SpotifyTokenManager.getInstance(context)
@@ -91,7 +93,16 @@ object SpotifyTokenRefresher {
                 } else {
                     val error = connection.errorStream?.bufferedReader()?.readText() ?: "Unknown error"
                     Log.e(TAG, "Token refresh failed: $responseCode - $error")
-                    Result.failure(Exception("Token refresh failed: $error"))
+                    
+                    // Check if the refresh token was revoked
+                    if (error.contains("invalid_grant", ignoreCase = true) || 
+                        error.contains("Refresh token revoked", ignoreCase = true)) {
+                        Log.e(TAG, "Refresh token has been revoked - clearing stored tokens")
+                        tokenManager.clearTokens()
+                        Result.failure(RefreshTokenRevokedException("Refresh token has been revoked. Please re-authenticate with Spotify."))
+                    } else {
+                        Result.failure(Exception("Token refresh failed: $error"))
+                    }
                 }
             } finally {
                 connection.disconnect()
