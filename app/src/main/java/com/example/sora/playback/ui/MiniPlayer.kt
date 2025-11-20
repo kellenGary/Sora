@@ -54,9 +54,9 @@ fun MiniPlayer(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-                .shadow(8.dp, RoundedCornerShape(20.dp))
-                .clip(RoundedCornerShape(20.dp))
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .shadow(4.dp, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .clickable(onClick = onExpand)
         ) {
             // Album art background (blurred effect simulation)
@@ -80,8 +80,8 @@ fun MiniPlayer(
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
                             )
                         )
                     )
@@ -91,7 +91,7 @@ fun MiniPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(72.dp)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -102,7 +102,7 @@ fun MiniPlayer(
                         contentDescription = "Album art",
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(4.dp, RoundedCornerShape(12.dp))
+                            .shadow(1.dp, RoundedCornerShape(12.dp))
                             .clip(RoundedCornerShape(12.dp)),
                         contentScale = ContentScale.Crop
                     )
@@ -110,7 +110,7 @@ fun MiniPlayer(
                     Box(
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(4.dp, RoundedCornerShape(12.dp))
+                            .shadow(1.dp, RoundedCornerShape(12.dp))
                             .clip(RoundedCornerShape(12.dp))
                             .background(
                                 Brush.linearGradient(
@@ -157,7 +157,7 @@ fun MiniPlayer(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .shadow(2.dp, CircleShape)
+                        .shadow(1.dp, CircleShape)
                         .background(
                             brush = Brush.linearGradient(
                                 colors = listOf(

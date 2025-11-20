@@ -123,10 +123,6 @@ class MapViewModel : ViewModel() {
             val result = mapRepository.getFriendsListeningHistory()
             
             result.onSuccess { locations ->
-                println("MapViewModel: Successfully fetched ${locations.size} song locations")
-                locations.forEach { location ->
-                    println("MapViewModel: Song location - ${location.songTitle} by ${location.artist} at ${location.location}")
-                }
                 _songLocations.value = locations
                 _locationState.value = _locationState.value.copy(isLoading = false)
             }.onFailure { error ->

@@ -42,6 +42,7 @@ import com.example.sora.viewmodel.IProfileViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.ui.text.font.FontFamily
 
 data class SongUi(
     val id: String,

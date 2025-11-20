@@ -38,7 +38,7 @@ import com.example.sora.playback.ui.ExpandedPlayer
 import com.example.sora.playback.ui.MiniPlayer
 import com.example.sora.service.SongTrackingService
 import com.example.sora.ui.BottomNavBar
-import com.example.sora.ui.MainScreen
+import com.example.sora.main.MainScreen
 import com.example.sora.ui.ProfileScreen
 import com.example.sora.ui.settings.optionScreens.ChangePasswordScreen
 import com.example.sora.ui.settings.SettingScreen
@@ -103,8 +103,16 @@ class MainActivity : ComponentActivity() {
                                         tokenResponse.refreshToken ?: tokenManager.getRefreshToken()!!,
                                         tokenResponse.expiresIn
                                     )
-                                }.onFailure {
-                                    Log.e(TAG, "Failed to refresh Spotify token on startup", it)
+                                }.onFailure { exception ->
+                                    Log.e(TAG, "Failed to refresh Spotify token on startup", exception)
+                                    
+                                    // If refresh token was revoked, sign out user
+                                    if (exception is SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                                        Log.w(TAG, "Refresh token revoked - signing out user")
+                                        tokenManager.clearTokens()
+                                        authViewModel.signOut()
+                                        authViewModel.setErrorMessage("Your Spotify connection has expired. Please log in again.")
+                                    }
                                 }
                             }.onFailure {
                                 Log.e(TAG, "Failed to sign into Supabase on startup", it)
@@ -119,6 +127,16 @@ class MainActivity : ComponentActivity() {
                     SpotifyTokenRefresher.refreshAccessToken(this@MainActivity).onSuccess {
                         // Update AuthViewModel state
                         authViewModel.refreshSpotifyStatus(null)
+                    }.onFailure { exception ->
+                        Log.e(TAG, "Failed to refresh token in background", exception)
+                        
+                        // If refresh token was revoked, sign out user
+                        if (exception is SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                            Log.w(TAG, "Refresh token revoked - signing out user")
+                            tokenManager.clearTokens()
+                            authViewModel.signOut()
+                            authViewModel.setErrorMessage("Your Spotify connection has expired. Please log in again.")
+                        }
                     }
                 }
             }
@@ -163,7 +181,7 @@ class MainActivity : ComponentActivity() {
                         Login(navController, authViewModel)
                     }
                     composable("main") {
-                        MainScreen(navController, authViewModel)
+                        MainScreen(navController)
                     }
                     composable("map") {
                          MapScreen(navController)
