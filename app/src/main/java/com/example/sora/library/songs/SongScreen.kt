@@ -114,7 +114,7 @@ fun SongDetailsContent(song: SpotifyTrackResponse) {
 
             // 2. Main Titles
             Text(
-                text = song.name ?: "Unknown Title",
+                text = song.name,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -143,7 +143,7 @@ fun SongDetailsContent(song: SpotifyTrackResponse) {
                 StatItem(
                     icon = Icons.Rounded.Tag,
                     label = "Track",
-                    value = "#${song.track_number ?: 0}"
+                    value = "#${song.track_number}"
                 )
                 StatItem(
                     icon = Icons.Rounded.Schedule,
@@ -167,7 +167,7 @@ fun SongDetailsContent(song: SpotifyTrackResponse) {
                 DetailRow(
                     icon = Icons.Rounded.Album,
                     title = "Album",
-                    value = song.album?.name ?: "Unknown"
+                    value = song.album.name ?: "Unknown"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 DetailRow(
