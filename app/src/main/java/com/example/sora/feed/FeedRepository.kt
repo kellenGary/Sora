@@ -3,12 +3,16 @@ package com.example.sora.feed
 import android.util.Log
 import com.example.sora.auth.SupabaseClient
 import com.example.sora.data.model.FeedActivity
+import com.example.sora.data.model.FriendWrapper
 import com.example.sora.data.model.RawFeedActivity
+import com.example.sora.data.model.SharedPlaylist
 import com.example.sora.data.model.User
 import com.example.sora.data.repository.FriendFollow
 import com.example.sora.data.repository.ListeningHistoryWithDetails
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -65,6 +69,38 @@ class FeedRepository {
 
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun getSharedPlaylists(): Result<List<SharedPlaylist>> = withContext(Dispatchers.IO) {
+        try {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return@withContext Result.failure(Exception("User not authenticated"))
+
+            val rawFriendList = client.from("follow_user")
+                .select(columns = Columns.list("following_id")) {
+                    filter {
+                        eq("follower_id", currentUserId)
+                    }
+                }
+                .decodeList<FriendWrapper>()
+
+            val targetIds = rawFriendList.map { it.id } + currentUserId
+
+            val feedPosts = client.from("shared_playlists")
+                .select {
+                    filter {
+                        isIn("user_id", targetIds)
+                    }
+                    order("created_at", Order.DESCENDING)
+                    limit(4)
+                }
+                .decodeList<SharedPlaylist>()
+
+            return@withContext Result.success(feedPosts)
+
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
         }
     }
 }

@@ -57,6 +57,13 @@ fun MainScreen(
             }
         }
 
+        item {
+            SharedPlaylistSection(
+                feedUiState = feedUiState,
+                feedViewModel = feedViewModel,
+                navController = navController
+            )
+        }
         // Recent Activity Section
         recentActivity(
             feedUiState = feedUiState,

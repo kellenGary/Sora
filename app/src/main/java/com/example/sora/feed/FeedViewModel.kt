@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.SupabaseClient
 import com.example.sora.data.model.FeedActivity
 import com.example.sora.data.model.RawFeedActivity
+import com.example.sora.data.model.SharedPlaylist
 import com.example.sora.data.repository.UserRepository
 import com.example.sora.utils.getLastListen
 import io.github.jan.supabase.postgrest.postgrest
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 
 data class FeedUiState(
     val posts: List<FeedActivity> = emptyList(),
+    val playlists: List<SharedPlaylist> = emptyList(),
     val activeFriendsListeners: List<FeedActivity> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -77,6 +79,7 @@ class FeedViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             
             val result = feedRepository.getFriendsFeed()
+            val playlists = feedRepository.getSharedPlaylists()
             
             result.onSuccess { posts ->
                 _uiState.value = _uiState.value.copy(
@@ -88,6 +91,18 @@ class FeedViewModel : ViewModel() {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = error.message ?: "Failed to load feed"
+                )
+            }
+            playlists.onSuccess { playlists ->
+                _uiState.value = _uiState.value.copy(
+                    playlists = playlists,
+                    isLoading = false,
+                    errorMessage = null
+                )
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = error.message ?: "Failed to load playlists"
                 )
             }
         }

@@ -94,8 +94,7 @@ dependencies {
 
     // Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("androidx.compose.material:material-icons-extended")
-
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
     // Supabase dependencies
     implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")

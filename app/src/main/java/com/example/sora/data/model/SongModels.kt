@@ -148,3 +148,19 @@ data class RawFeedActivity(
     val longitude: Double? = null,
     @SerialName("activity_type") val activityType: String
 )
+
+@Serializable
+data class SharedPlaylist(
+    val id: String,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("user_id") val userId: String,
+
+    @SerialName("playlist_id") val playlistId: String?,
+    @SerialName("playlist_name") val playlistName: String,
+    @SerialName("playlist_image_url") val playlistImageUrl: String?,
+)
+
+@Serializable
+data class FriendWrapper(
+    @SerialName("follower_id") val id: String // Matches the JSON key {"follower_id": "..."}
+)

@@ -1,8 +1,10 @@
 package com.example.sora.library.playlists
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,12 +16,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +58,7 @@ import com.example.sora.R
 import com.example.sora.ui.BottomNavBar
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PlaylistScreen (
     navController: NavController,
@@ -75,6 +83,19 @@ fun PlaylistScreen (
             // --- Playlist header ---
             item {
                 PlaylistHeader(playlist)
+            }
+            item {
+                ShareStatusButton(
+                    isShared = playlistViewModel.isShared, // Observe the ViewModel state
+                    onClick = {
+                            playlistViewModel.sharePlaylistToFeed(
+                            playlistId = playlistId,
+                            name = playlist?.name ?: "Unknown",
+                            imageUrl = playlist?.images?.firstOrNull()?.url ?: "",
+                            owner = playlist?.owner?.display_name ?: "Unknown"
+                        )
+                    }
+                )
             }
 
 
@@ -250,6 +271,54 @@ fun SongOptionMenu(
                     onDetailsClick() // Then navigate
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun ShareStatusButton(
+    isShared: Boolean,
+    onClick: () -> Unit
+) {
+    // Animate the color change for a premium feel
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isShared) Color.DarkGray else Color.White.copy(alpha = 0.1f),
+        label = "color"
+    )
+
+    val contentColor by animateColorAsState(
+        targetValue = if (isShared) Color.Green else Color.White,
+        label = "text"
+    )
+
+    Button(
+        onClick = onClick,
+        enabled = !isShared, // Disable the button once shared
+        colors = ButtonDefaults.buttonColors(
+            containerColor = backgroundColor,
+            disabledContainerColor = Color.DarkGray,
+            contentColor = contentColor,
+            disabledContentColor = Color.White
+        ),
+        shape = CircleShape,
+        modifier = Modifier.height(35.dp)
+    ) {
+        if (isShared) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Shared")
+        } else {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Share")
         }
     }
 }
