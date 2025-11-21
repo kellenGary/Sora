@@ -44,4 +44,41 @@ class UserRepository {
         }
 
     }
+
+    suspend fun updateUserActiveStatus(isActive: Boolean, explicitUserId: String? = null) {
+        val userId = explicitUserId ?: client.auth.currentUserOrNull()?.id ?: return
+        try {
+            client.postgrest["users"].update({
+                set("is_active", isActive)
+            }) {
+                filter { eq("id", userId) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun getActiveFriends(): List<User> {
+        val currentUser = client.auth.currentUserOrNull() ?: return emptyList()
+
+        // 1. Get friends IDs
+        val friends = client.postgrest["follow_user"]
+            .select {
+                filter { eq("follower_id", currentUser.id) }
+            }
+            .decodeList<FriendFollow>()
+            .map { it.followeeId }
+
+        if (friends.isEmpty()) return emptyList()
+
+        // 2. Get active users from friends list
+        return client.postgrest["users"]
+            .select {
+                filter {
+                    isIn("id", friends)
+                    eq("is_active", true)
+                }
+            }
+            .decodeList<User>()
+    }
 }

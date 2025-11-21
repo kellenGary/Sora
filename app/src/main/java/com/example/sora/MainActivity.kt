@@ -93,6 +93,9 @@ class MainActivity : ComponentActivity() {
                             authRepository.signIn(email, password).onSuccess {
                                 Log.d(TAG, "Successfully logged into Supabase, now refreshing Spotify token")
 
+                                // Set user active
+                                com.example.sora.data.repository.UserRepository().updateUserActiveStatus(true)
+
                                 // Now refresh Spotify token
                                 SpotifyTokenRefresher.refreshAccessToken(this@MainActivity).onSuccess { tokenResponse ->
                                     Log.d(TAG, "Spotify token refreshed successfully")

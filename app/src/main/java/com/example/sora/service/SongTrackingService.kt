@@ -18,6 +18,7 @@ import com.example.sora.auth.SpotifyTokenManager
 import com.example.sora.auth.SpotifyTokenRefresher
 import com.example.sora.auth.SupabaseClient
 import com.example.sora.data.repository.SongTrackingRepository
+import com.example.sora.data.repository.UserRepository
 import com.example.sora.location.LocationProvider
 import com.example.sora.playback.SpotifyPlaybackManager
 import com.example.sora.playback.SpotifyTrack
@@ -39,11 +40,13 @@ class SongTrackingService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
     private lateinit var authRepository: AuthRepository
     private val songTrackingRepository = SongTrackingRepository()
+    private val userRepository = UserRepository()
     private lateinit var locationProvider: LocationProvider
     private lateinit var tokenManager: SpotifyTokenManager
     
     private var currentTrackId: String? = null
     private var pollingJob: Job? = null
+    private var isUserActive = false
 
     override fun onCreate() {
         super.onCreate()
@@ -237,9 +240,20 @@ class SongTrackingService : Service() {
         Log.d(TAG, "Valid access token obtained, checking playback...")
         val result = SpotifyPlaybackManager.getCurrentPlayback(accessToken)
         result.onSuccess { playbackState ->
+            val userId = tokenManager.getUserId()
+
             if (playbackState?.item != null && playbackState.isPlaying) {
                 val track = playbackState.item
                 
+                // Update active status if needed
+                if (!isUserActive && userId != null) {
+                    serviceScope.launch {
+                        userRepository.updateUserActiveStatus(true, userId)
+                        isUserActive = true
+                        Log.d(TAG, "User marked as ACTIVE")
+                    }
+                }
+
                 // Check if this is a new song
                 if (currentTrackId != track.id) {
                     Log.d(TAG, "New song detected: ${track.name} by ${track.artists.firstOrNull()?.name}")
@@ -253,6 +267,14 @@ class SongTrackingService : Service() {
                 }
             } else {
                 // No playback or paused
+                if (isUserActive && userId != null) {
+                    serviceScope.launch {
+                        userRepository.updateUserActiveStatus(false, userId)
+                        isUserActive = false
+                        Log.d(TAG, "User marked as INACTIVE (paused/stopped)")
+                    }
+                }
+
                 if (playbackState == null) {
                     updateNotification("No active playback")
                 } else if (!playbackState.isPlaying) {
@@ -345,8 +367,31 @@ class SongTrackingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service destroyed")
+        
+        val userId = tokenManager.getUserId()
+        if (userId != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                userRepository.updateUserActiveStatus(false, userId)
+                Log.d(TAG, "User marked as INACTIVE (service destroy)")
+            }
+        }
+        
         pollingJob?.cancel()
         serviceScope.cancel()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.d(TAG, "Task removed (app swiped away)")
+
+        val userId = tokenManager.getUserId()
+        if (userId != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                userRepository.updateUserActiveStatus(false, userId)
+                Log.d(TAG, "User marked as INACTIVE (task removed)")
+            }
+        }
+        stopSelf()
     }
 
     companion object {

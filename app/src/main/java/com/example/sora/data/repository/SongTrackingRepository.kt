@@ -11,6 +11,7 @@ import com.example.sora.data.model.ListenHistory
 import com.example.sora.data.model.Song
 import com.example.sora.data.model.SongInsert
 import com.example.sora.playback.SpotifyTrack
+import com.example.sora.utils.getLastListen
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -95,6 +96,21 @@ class SongTrackingRepository {
             val songId = getOrCreateSong(spotifyTrack, artistId, albumId)
             if (songId == null) {
                 return@withContext Result.failure(Exception("Failed to create/get song"))
+            }
+
+            // Check most recently listened song to prevent duplicates
+            val lastListen = getLastListen(supabase, actualUserId)
+
+            if (lastListen != null && lastListen.songId == songId) {
+                // If the same song was logged recently, delete the old entry so we can update it with new timestamp
+                Log.d(TAG, "Duplicate listen detected: ${spotifyTrack.name}. Replacing old entry.")
+                if (lastListen.id != null) {
+                    supabase.from("listen_history").delete {
+                        filter {
+                            eq("id", lastListen.id)
+                        }
+                    }
+                }
             }
 
             // 4. Create listen history entry

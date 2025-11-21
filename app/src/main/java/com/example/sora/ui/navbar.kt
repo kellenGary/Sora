@@ -37,7 +37,7 @@ fun BottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 28.dp, vertical = 12.dp),
+                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 8.dp),
             contentAlignment = Alignment.Center
         ) {
             // Blurred background layer
@@ -55,7 +55,7 @@ fun BottomNavBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable(
                         onClick = { },
                         indication = null,
@@ -63,27 +63,16 @@ fun BottomNavBar(
                     )
                     .shadow(
                         elevation = 24.dp,
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(16.dp),
                         spotColor = Color.Black.copy(alpha = 0.4f)
                     )
                     .background(
-                        brush = Brush.verticalGradient(
+                        Brush.horizontalGradient(
                             colors = listOf(
-                                Color(0xFF7A7A7A).copy(alpha = 0.95f),
-                                Color(0xFF5E5E5E).copy(alpha = 0.92f),
-                                Color(0xFF4E4E4E).copy(alpha = 0.90f)
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
                             )
                         )
-                    )
-                    .border(
-                        width = 1.5.dp,
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFFAAAAAA).copy(alpha = 0.5f),
-                                Color(0xFF888888).copy(alpha = 0.3f)
-                            )
-                        ),
-                        shape = RoundedCornerShape(20.dp)
                     )
             ) {
                 Row(
