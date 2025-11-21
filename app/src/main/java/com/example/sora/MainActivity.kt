@@ -204,7 +204,6 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("songId"){ type = NavType.StringType })
                     ) { backStackEntry ->
                         val songId = backStackEntry.arguments?.getString("songId")
-                        System.out.println(songId)
                         SongScreen(navController, songId = songId)
                     }
                     composable("friends") {

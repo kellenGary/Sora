@@ -94,6 +94,7 @@ dependencies {
 
     // Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Supabase dependencies
     implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
@@ -110,6 +111,7 @@ dependencies {
     // If you don't have these already:
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     implementation(libs.androidx.benchmark.traceprocessor)
+    implementation(libs.androidx.material3)
     // Tooling for previews and debugging
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

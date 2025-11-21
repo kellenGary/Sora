@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -88,30 +89,35 @@ fun LibraryScreen(
 @Composable
 fun PlaylistItem(playlist: PlaylistItem, modifier: Modifier = Modifier) {
     Card(
+        shape = RoundedCornerShape(16.dp),
         modifier = modifier
             .aspectRatio(1f)
-            .fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Box {
             AsyncImage(
                 model = playlist.images.firstOrNull()?.url,
-                contentDescription = "Playlist Cover Art",
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Gray)
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 100f
+                        )
+                    )
             )
             Text(
                 text = playlist.name,
-                textAlign = TextAlign.Center,
+                color = Color.White,
                 fontWeight = FontWeight.Bold,
-                maxLines = 2, // Allow for slightly longer names
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(12.dp)
             )
         }
     }

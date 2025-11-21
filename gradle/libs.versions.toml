@@ -23,6 +23,7 @@ mapsCompose = "4.3.3"
 playServicesMaps = "18.2.0"
 playServicesLocation = "21.3.0"
 benchmarkTraceprocessor = "1.4.1"
+material3 = "1.3.1"
 
 [libraries]
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
@@ -66,6 +67,7 @@ google-maps-compose = { group = "com.google.maps.android", name = "maps-compose"
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-benchmark-traceprocessor = { group = "androidx.benchmark", name = "benchmark-traceprocessor", version.ref = "benchmarkTraceprocessor" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
