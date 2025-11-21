@@ -27,12 +27,13 @@ class UserStatsRepository {
     }
 
     suspend fun getUniqueSongCount(userId: String): Int {
-        return client.postgrest["user_unique_song_count"]
+        val result = client.postgrest["user_unique_song_count"]
             .select {
                 filter { eq("user_id", userId) }
             }
-            .decodeSingle<UniqueSongCount>()
-            .uniqueSongCount
+            .decodeSingleOrNull<UniqueSongCount>()
+
+        return result?.uniqueSongCount ?: 0
     }
 
 
