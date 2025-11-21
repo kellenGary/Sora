@@ -109,14 +109,6 @@ fun MapScreen(
         )
     }
 
-    // Debug logging
-    LaunchedEffect(songLocations) {
-        println("MapScreen: songLocations count = ${songLocations.size}")
-        songLocations.forEach { song ->
-            println("Song: ${song.songTitle} at ${song.location}")
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),

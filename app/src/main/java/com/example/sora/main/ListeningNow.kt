@@ -29,12 +29,8 @@ import com.example.sora.feed.FeedUiState
 
 @Composable
 fun ListeningNow(feedUiState: FeedUiState, navController: NavController) {
-    // Get unique users with their most recent song
-    val recentByUser = feedUiState.posts
-        .groupBy { it.userId }
-        .mapValues { (_, posts) -> posts.maxByOrNull { it.timestamp } }
-        .values
-        .filterNotNull()
+    // Use activeFriendsListeners directly
+    val recentByUser = feedUiState.activeFriendsListeners
         .sortedByDescending { it.timestamp }
         .take(5)
 

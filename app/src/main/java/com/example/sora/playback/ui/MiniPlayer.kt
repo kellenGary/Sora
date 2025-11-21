@@ -29,6 +29,7 @@ import coil.compose.AsyncImage
 import com.example.sora.playback.PlaybackViewModel
 import android.util.Log
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.blur
 
 private const val TAG = "MiniPlayer"
 
@@ -54,11 +55,19 @@ fun MiniPlayer(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .padding(horizontal = 16.dp)
                 .shadow(4.dp, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp))
                 .clickable(onClick = onExpand)
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White.copy(alpha = 0.02f))
+                    .blur(radius = 40.dp)
+            )
             // Album art background (blurred effect simulation)
             uiState.track?.album?.images?.firstOrNull()?.url?.let { imageUrl ->
                 AsyncImage(
@@ -71,7 +80,7 @@ fun MiniPlayer(
                     alpha = 0.3f
                 )
             }
-            
+
             // Gradient overlay
             Box(
                 modifier = Modifier
@@ -80,8 +89,8 @@ fun MiniPlayer(
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
                             )
                         )
                     )

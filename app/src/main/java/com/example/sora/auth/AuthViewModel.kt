@@ -3,6 +3,7 @@ package com.example.sora.auth
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sora.data.repository.UserRepository
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.user.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,6 +76,9 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
                         successMessage = "Login successful!"
                     )
 
+                    // Set user active
+                    UserRepository().updateUserActiveStatus(true)
+
                     val user = authRepository.getCurrentUser()
                     refreshSpotifyStatus(user)
                 }
@@ -109,6 +113,9 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
 
     override fun signOut() {
         viewModelScope.launch {
+            // Set user inactive before signing out
+            UserRepository().updateUserActiveStatus(false)
+            
             authRepository.signOut()
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(isLoggedIn = false)
@@ -169,6 +176,10 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
 
                     result.onSuccess {
                         Log.d(TAG, "User logged in successfully")
+                        
+                        // Set user active
+                        UserRepository().updateUserActiveStatus(true)
+                        
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             isLoggedIn = true,
