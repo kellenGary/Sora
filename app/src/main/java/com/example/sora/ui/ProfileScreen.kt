@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asComposeRenderEffect
 
@@ -205,17 +206,16 @@ fun ProfileHeader(
                 if (!isPersonalProfile) {
                     Spacer(Modifier.height(8.dp))
 
-                    // TODO: Check if following user or not
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFF282828)) // Darker background for contrast
+                            .background(Color(0xFF282828))
                             .clickable { handleFollowClick() }
                             .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = if(isFollowed) "Unfollow" else "Follow",
-                            color = Color.White, // White text for contrast
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.W600
                         )
@@ -269,13 +269,13 @@ fun ExpandableSongSection(
             Text(
                 text = title,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.W600, // Increased font weight for better readability
-                color = Color.White // Changed text color to white for dark theme
+                fontWeight = FontWeight.W600,
+                color = Color.White
             )
             if (songs.size > 2) {
                 Text(
                     text = if (isExpanded) "See less" else "See more",
-                    color = Color.LightGray, // Changed text color for dark theme
+                    color = Color.LightGray,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable { isExpanded = !isExpanded }
                 )
