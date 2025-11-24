@@ -1,5 +1,6 @@
 package com.example.sora.ui
 
+import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,7 +43,11 @@ import com.example.sora.viewmodel.IProfileViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.ui.text.font.FontFamily
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asComposeRenderEffect
 
 data class SongUi(
     val id: String,
@@ -183,7 +188,8 @@ fun ProfileHeader(
                 Text(
                     text = username,
                     fontWeight = FontWeight.W700,
-                    fontSize = 16.sp
+                    fontSize = 20.sp,
+                    color = Color.White
                 )
 
                 // Spacer
@@ -193,24 +199,23 @@ fun ProfileHeader(
                 Text(
                     text = subHeadingText,
                     fontWeight = FontWeight.W300,
-                    fontSize = 12.sp,
-                    color = Color.Gray
+                    fontSize = 14.sp,
+                    color = Color.White
                 )
 
                 if (!isPersonalProfile) {
                     Spacer(Modifier.height(8.dp))
 
-                    // TODO: Check if following user or not
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Color.DarkGray)
+                            .background(Color(0xFF282828))
                             .clickable { handleFollowClick() }
                             .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = if(isFollowed) "Unfollow" else "Follow",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.W600
                         )
@@ -264,12 +269,13 @@ fun ExpandableSongSection(
             Text(
                 text = title,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.W500,
+                fontWeight = FontWeight.W600,
+                color = Color.White
             )
             if (songs.size > 2) {
                 Text(
                     text = if (isExpanded) "See less" else "See more",
-                    color = Color.Blue,
+                    color = Color.LightGray,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable { isExpanded = !isExpanded }
                 )
@@ -302,58 +308,84 @@ fun SongCard(
     onLikeToggle: (SongUi, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
+    val glassBackgroundColor = Color.Black.copy(alpha = 0.3f)
+    val glassBorderColor = Color.White.copy(alpha = 0.2f)
 
     // Card container
     Box(
         modifier = modifier
             .height(120.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFFE7E5DE))
+            .clip(RoundedCornerShape(12.dp))
     ) {
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(glassBackgroundColor)
+                .graphicsLayer {
+                    // Check for API 31 (Android 12) or higher
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        // THIS IS THE BACKGROUND BLUR EFFECT
+                        renderEffect = RenderEffect
+                            .createBlurEffect(
+                                15f, 15f, // Blur radius X and Y
+                                Shader.TileMode.CLAMP
+                            )
+                            .asComposeRenderEffect()
+                    }
+                }
+                .border(
+                    width = 1.dp,
+                    color = glassBorderColor,
+                    shape = RoundedCornerShape(12.dp)
+                )
+        )
+
         // Row to hold the album art and song details
         Row(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(10.dp, 12.dp)
         ) {
             // Album Art
             AsyncImage(
                 model = song.albumArtUrl,
-                contentDescription = "Profile Picture",
+                contentDescription = "Album Art",
                 placeholder = ColorPainter(Color(0xFFD9D9D9)),
                 error = ColorPainter(Color(0xFFD9D9D9)),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(96.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .border(
-                        width = 1.dp,
-                        color = Color.Black,
-                        shape = RoundedCornerShape(4.dp)
+                        width = 0.5.dp,
+                        color = Color.LightGray.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp)
                     )
             )
 
             Spacer(modifier = Modifier.width(10.dp))
 
             // Song Details
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = song.title,
                     fontWeight = FontWeight.W500,
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = song.artist,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.W300,
-                    color = Color.Black
+                    color = Color.White
                 )
 
                 // Heart Icon at bottom right
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize() // Fill the remaining space in the column
                         .wrapContentSize(Alignment.BottomEnd)
                 ) {
                     IconButton(
@@ -368,7 +400,6 @@ fun SongCard(
                 }
             }
         }
-
     }
 }
 

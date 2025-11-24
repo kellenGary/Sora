@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -94,12 +95,13 @@ fun SettingsCard(
                 text = text,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.W400,
+                color = MaterialTheme.colorScheme.onPrimary
             )
             Text(
                 text = subText,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.W400,
-                color = Color.Black.copy(alpha = 0.5F)
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
     }
