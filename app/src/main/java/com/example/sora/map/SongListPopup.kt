@@ -50,6 +50,10 @@ fun SongListPopup(
     onDismiss: () -> Unit,
     onViewSong: (SongLocation) -> Unit
 ) {
+    val uniqueSongs = androidx.compose.runtime.remember(songs) {
+        songs.distinctBy { it.songTitle + it.artist }
+    }
+
     Popup(
         alignment = Alignment.BottomCenter,
         onDismissRequest = onDismiss,
@@ -109,7 +113,7 @@ fun SongListPopup(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = if (songs.size == 1) "1 song" else "${songs.size} songs",
+                                    text = if (uniqueSongs.size == 1) "1 song" else "${uniqueSongs.size} songs",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -137,7 +141,7 @@ fun SongListPopup(
                                 .height(300.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            items(songs) { song ->
+                            items(uniqueSongs) { song ->
                                 SongListItem(
                                     song = song
                                 )
