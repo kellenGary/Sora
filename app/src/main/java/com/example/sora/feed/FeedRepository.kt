@@ -61,7 +61,8 @@ class FeedRepository {
                     timestamp = kotlinx.datetime.Instant.parse(raw.timestamp).toEpochMilliseconds(),
                     latitude = raw.latitude,
                     longitude = raw.longitude,
-                    activityType = raw.activityType
+                    activityType = raw.activityType,
+                    playlistId = raw.playlistId
                 )
             }
 

@@ -37,7 +37,7 @@ fun ActiveUserCard(
     userName: String,
     userAvatar: String?,
     songTitle: String,
-    artist: String,
+    artist: String?,
     albumCover: String?,
     onClick: () -> Unit
 ) {
@@ -132,7 +132,7 @@ fun ActiveUserCard(
                 )
                 
                 Text(
-                    text = artist,
+                    text = artist ?: "Unknown Artist",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     maxLines = 1,

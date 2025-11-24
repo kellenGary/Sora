@@ -66,17 +66,20 @@ class MapViewModel : ViewModel() {
                 
                 // Fetch friends' listening history when we get location
                 if (_songLocations.value.isEmpty()) {
-                    println("MapViewModel: Fetching friends' listening history...")
-                    fetchFriendsListeningHistory()
+                    // Do NOT fetch automatically on location update for the MiniMap
+                    // The MiniMap loads songs passed to it or via manual refresh
+                    // We leave this empty to prevent auto-fetching on every screen load if not needed
+                    // println("MapViewModel: Fetching friends' listening history...")
+                    // fetchFriendsListeningHistory()
                 }
             }
         }
         
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
-            10000L // 10 seconds
+            60000L // 60 seconds - Increased from 10s to reduce updates
         ).apply {
-            setMinUpdateIntervalMillis(5000L) // 5 seconds
+            setMinUpdateIntervalMillis(30000L) // 30 seconds
         }.build()
 
         locationCallback = object : LocationCallback() {
@@ -89,13 +92,8 @@ class MapViewModel : ViewModel() {
                         isLoading = false
                     )
                     
-                    // Fetch friends' listening history when we first get the user's location
-                    if (_songLocations.value.isEmpty()) {
-                        println("MapViewModel: Song locations empty, fetching...")
-                        fetchFriendsListeningHistory()
-                    } else {
-                        println("MapViewModel: Already have ${_songLocations.value.size} song locations")
-                    }
+                    // Do NOT fetch friends' listening history automatically here
+                    // The songs are loaded once via explicit call or pull-to-refresh
                 }
             }
         }

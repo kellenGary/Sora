@@ -83,5 +83,7 @@ data class PlaybackUiState(
     val durationMs: Long = 0L,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val hasActiveDevice: Boolean = false
+    val hasActiveDevice: Boolean = false,
+    val shuffleState: Boolean = false,
+    val repeatState: String = "off" // "off", "track", "context"
 )

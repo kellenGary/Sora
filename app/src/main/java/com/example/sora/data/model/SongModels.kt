@@ -126,12 +126,13 @@ data class FeedActivity(
     @SerialName("display_name") val userName: String?,
     @SerialName("avatar_url") val userAvatar: String?,
     @SerialName("song_title") val songTitle: String,
-    val artist: String,
+    val artist: String?,
     @SerialName("album_cover") val albumCover: String? = null,
     val timestamp: Long,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    @SerialName("activity_type") val activityType: String
+    @SerialName("activity_type") val activityType: String,
+    @SerialName("playlist_id") val playlistId: String? = null
 )
 
 @Serializable
@@ -141,12 +142,13 @@ data class RawFeedActivity(
     @SerialName("display_name") val userName: String?,
     @SerialName("avatar_url") val userAvatar: String?,
     @SerialName("song_title") val songTitle: String,
-    val artist: String,
+    val artist: String?,
     @SerialName("album_cover") val albumCover: String? = null,
     val timestamp: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    @SerialName("activity_type") val activityType: String
+    @SerialName("activity_type") val activityType: String,
+    @SerialName("playlist_id") val playlistId: String? = null
 )
 
 @Serializable

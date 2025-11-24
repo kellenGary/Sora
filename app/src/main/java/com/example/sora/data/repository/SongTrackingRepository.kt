@@ -38,25 +38,6 @@ class SongTrackingRepository {
             
             Log.d(TAG, "Initial session status: $sessionStatus")
             
-            if (sessionStatus is io.github.jan.supabase.gotrue.SessionStatus.LoadingFromStorage) {
-                Log.d(TAG, "⏳ Session is loading from storage, waiting for completion...")
-                var attempts = 0
-                val maxAttempts = 20 // Wait up to 10 seconds
-                
-                while (sessionStatus is io.github.jan.supabase.gotrue.SessionStatus.LoadingFromStorage && attempts < maxAttempts) {
-                    kotlinx.coroutines.delay(500)
-                    sessionStatus = sessionStatusFlow.value
-                    attempts++
-                    Log.d(TAG, "  Waiting... attempt $attempts/$maxAttempts")
-                }
-                
-                if (sessionStatus is io.github.jan.supabase.gotrue.SessionStatus.LoadingFromStorage) {
-                    Log.w(TAG, "⚠ Session still loading after ${maxAttempts * 500}ms, proceeding anyway")
-                } else {
-                    Log.d(TAG, "✓ Session loading completed: $sessionStatus")
-                }
-            }
-            
             val currentUser = supabase.auth.currentUserOrNull()
             
             Log.d(TAG, "Final session status: $sessionStatus")

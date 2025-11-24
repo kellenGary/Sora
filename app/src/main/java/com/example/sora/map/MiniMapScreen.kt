@@ -17,6 +17,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -92,6 +94,9 @@ fun MiniMapScreen(
             )
         )
     }
+    
+    // Async map loading state
+    var isMapLoaded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -104,36 +109,52 @@ fun MiniMapScreen(
                 .fillMaxWidth()
                 .height(240.dp) // Ensure Box matches Card height
         ) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = mapProperties,
-                uiSettings = uiSettings
-            ) {
-                // Display song locations as circles - same as MapScreen
-                songLocations.forEach { songLocation ->
-                    // Generate colors for each circle - same colors as MapScreen
-                    val colors = listOf(
-                        Color(0x88FF6B6B), // Red
-                        Color(0x884ECDC4), // Blue
-                        Color(0x88FFD93D), // Yellow
-                        Color(0x88A8E6CF), // Green
-                        Color(0x88FF8B94), // Pink
-                        Color(0x88C7CEEA), // Purple
-                        Color(0x88FFDAB9), // Orange
-                        Color(0x8895E1D3)  // Teal
-                    )
-                    val colorIndex = songLocation.id.hashCode().mod(colors.size).let { 
-                        if (it < 0) it + colors.size else it 
+            if (isMapLoaded) {
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = mapProperties,
+                    uiSettings = uiSettings
+                ) {
+                    // Display song locations as circles - same as MapScreen
+                    songLocations.forEach { songLocation ->
+                        // Generate colors for each circle - same colors as MapScreen
+                        val colors = listOf(
+                            Color(0x88FF6B6B), // Red
+                            Color(0x884ECDC4), // Blue
+                            Color(0x88FFD93D), // Yellow
+                            Color(0x88A8E6CF), // Green
+                            Color(0x88FF8B94), // Pink
+                            Color(0x88C7CEEA), // Purple
+                            Color(0x88FFDAB9), // Orange
+                            Color(0x8895E1D3)  // Teal
+                        )
+                        val colorIndex = songLocation.id.hashCode().mod(colors.size).let { 
+                            if (it < 0) it + colors.size else it 
+                        }
+                        val circleColor = colors[colorIndex]
+                        
+                        Circle(
+                            center = songLocation.location,
+                            radius = songLocation.radiusMeters,
+                            fillColor = circleColor,
+                            strokeColor = Color(0xAAFFFFFF),
+                            strokeWidth = 3f // Same stroke width as MapScreen
+                        )
                     }
-                    val circleColor = colors[colorIndex]
-                    
-                    Circle(
-                        center = songLocation.location,
-                        radius = songLocation.radiusMeters,
-                        fillColor = circleColor,
-                        strokeColor = Color(0xAAFFFFFF),
-                        strokeWidth = 3f // Same stroke width as MapScreen
+                }
+            } else {
+                // Placeholder while map loads
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Loading Map...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -147,6 +168,12 @@ fun MiniMapScreen(
                     }
             )
         }
+    }
+    
+    // Trigger async load
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(100) // Small delay to allow main thread to settle
+        isMapLoaded = true
     }
 
     // Clean up location updates when screen is removed (same as MapScreen)

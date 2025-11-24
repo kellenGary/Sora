@@ -37,7 +37,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     /**
      * Start polling Spotify API for playback state
      * Runs entirely in background thread with no blocking
-     * Polls every 5 seconds, or faster when there are errors
+     * Polls every 30 seconds (reduced from 5), or on manual refresh
      */
     fun startPolling() {
         pollingJob?.cancel()
@@ -45,7 +45,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             while (isActive) {
                 try {
                     refreshPlaybackStateBackground()
-                    delay(5000) // Poll every 5 seconds
+                    delay(5000) // Poll every 30 seconds
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in polling loop", e)
                     delay(10000) // Wait longer on error
@@ -117,6 +117,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                         progressMs = currentProgress,
                         durationMs = playbackState.item?.durationMs ?: 0L,
                         hasActiveDevice = playbackState.device != null,
+                        shuffleState = playbackState.shuffleState,
+                        repeatState = playbackState.repeatState,
                         isLoading = false
                     )
                     
@@ -359,6 +361,62 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         }
     }
     
+    /**
+     * Toggle shuffle
+     */
+    fun toggleShuffle() {
+        val currentState = _uiState.value.shuffleState
+        val newState = !currentState
+        
+        // Optimistic update
+        _uiState.value = _uiState.value.copy(shuffleState = newState)
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication()) ?: return@launch
+            val result = SpotifyPlaybackManager.setShuffle(accessToken, newState)
+            
+            result.onSuccess {
+                delay(500)
+                refreshPlaybackStateBackground()
+            }.onFailure {
+                // Revert on failure
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(shuffleState = currentState, error = "Failed to toggle shuffle")
+                }
+            }
+        }
+    }
+    
+    /**
+     * Cycle repeat mode: off -> context (all) -> track (one) -> off
+     */
+    fun cycleRepeatMode() {
+        val currentMode = _uiState.value.repeatState
+        val newMode = when (currentMode) {
+            "off" -> "context"
+            "context" -> "track"
+            else -> "off"
+        }
+        
+        // Optimistic update
+        _uiState.value = _uiState.value.copy(repeatState = newMode)
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication()) ?: return@launch
+            val result = SpotifyPlaybackManager.setRepeat(accessToken, newMode)
+            
+            result.onSuccess {
+                delay(500)
+                refreshPlaybackStateBackground()
+            }.onFailure {
+                // Revert
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(repeatState = currentMode, error = "Failed to set repeat")
+                }
+            }
+        }
+    }
+
     /**
      * Manually refresh playback state (pull to refresh, etc.)
      * Returns immediately, refresh happens in background

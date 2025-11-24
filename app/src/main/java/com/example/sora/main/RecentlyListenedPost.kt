@@ -188,7 +188,7 @@ fun RecentlyListenedPost(
                         maxLines = 2
                     )
                     Text(
-                        text = post.artist,
+                        text = post.artist ?: "Unknown Artist",
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.White.copy(alpha = 0.9f),
                         maxLines = 1

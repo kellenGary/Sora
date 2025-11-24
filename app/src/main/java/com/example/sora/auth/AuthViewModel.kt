@@ -33,24 +33,68 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
 
     private val _uiState = MutableStateFlow(AuthUiState())
     override val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+    
+    // Flag to prevent race conditions between Supabase auth updates and local token saving during login
+    private var isLoginInProgress = false
 
     init {
         val initialLoggedIn = authRepository.getCurrentUser() != null
         
         // Check for stored Spotify tokens
         val tokenManager = SpotifyTokenManager.getInstance(application)
-        val hasStoredTokens = tokenManager.hasStoredCredentials()
         
-        Log.d(TAG, "Initializing AuthViewModel - isLoggedIn: $initialLoggedIn, hasStoredTokens: $hasStoredTokens")
+        Log.d(TAG, "Initializing AuthViewModel - initialLoggedIn: $initialLoggedIn")
         
-        _uiState.value = AuthUiState(
-            isLoggedIn = initialLoggedIn,
-            isSpotifyConnected = hasStoredTokens && initialLoggedIn
-        )
+        // If we have a user, start in loading state and let the collector handle verification
+        if (initialLoggedIn) {
+            _uiState.value = AuthUiState(isLoading = true, isLoggedIn = false)
+        } else {
+            _uiState.value = AuthUiState(isLoggedIn = false)
+        }
 
         viewModelScope.launch {
             authRepository.observeAuthState().collect { status ->
+                // Skip state updates if we are in the middle of a manual login flow
+                // This prevents the observer from seeing "Authenticated" before tokens are saved locally
+                if (isLoginInProgress) {
+                    Log.d(TAG, "Ignoring auth state change during login process")
+                    return@collect
+                }
+
                 val isAuthenticated = status is SessionStatus.Authenticated
+                
+                // If authenticated, check for valid Spotify session
+                if (isAuthenticated) {
+                    // Check if user is supposed to be connected to Spotify (based on Supabase metadata)
+                    val shouldHaveSpotify = authRepository.isSpotifyConnected()
+                    val hasValidTokens = tokenManager.hasValidTokens()
+                    
+                    if (shouldHaveSpotify && !hasValidTokens) {
+                        Log.d(TAG, "User is authenticated but Spotify token is invalid/expired. Attempting refresh...")
+                        _uiState.value = _uiState.value.copy(isLoading = true)
+                        
+                        if (tokenManager.hasStoredCredentials()) {
+                            val refreshResult = SpotifyTokenRefresher.refreshAccessToken(application)
+                            
+                            if (refreshResult.isFailure) {
+                                Log.e(TAG, "Failed to refresh Spotify token. Signing out.")
+                                authRepository.signOut()
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    errorMessage = "Spotify session expired. Please login again."
+                                )
+                                return@collect
+                            } else {
+                                Log.d(TAG, "Spotify token refreshed successfully.")
+                            }
+                        } else {
+                            Log.e(TAG, "User should have Spotify but no local credentials. Signing out.")
+                            authRepository.signOut()
+                            return@collect
+                        }
+                    }
+                }
+
                 val isSpotifyConnected = tokenManager.hasStoredCredentials() && isAuthenticated
                 
                 _uiState.value = _uiState.value.copy(
@@ -149,6 +193,7 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
         Log.d(TAG, "==================== SPOTIFY AUTH RESULT ====================")
         Log.d(TAG, "Received tokens - creating/logging in Supabase user")
 
+        isLoginInProgress = true
         val spotifyData = SpotifyAuthData(accessToken, refreshToken, expiresIn)
 
         _uiState.value = _uiState.value.copy(
@@ -183,6 +228,7 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             isLoggedIn = true,
+                            isSpotifyConnected = true,
                             successMessage = "Logged in with Spotify!"
                         )
                     }.onFailure { e ->
@@ -191,6 +237,7 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
                             isLoading = false,
                             errorMessage = "Login failed: ${e.message}"
                         )
+                        authRepository.signOut() // Clean up if failed
                     }
                 } else {
                     Log.e(TAG, "Failed to fetch Spotify profile")
@@ -205,6 +252,8 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
                     isLoading = false,
                     errorMessage = "Login failed: ${e.message}"
                 )
+            } finally {
+                isLoginInProgress = false
             }
         }
 

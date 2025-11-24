@@ -68,8 +68,9 @@ object SpotifyAuthManager {
         Log.d(TAG, "Code verifier present: ${authRequest.codeVerifier != null}")
         
         val authService = AuthorizationService(context)
-
-        return authService.getAuthorizationRequestIntent(authRequest)
+        val intent = authService.getAuthorizationRequestIntent(authRequest)
+        authService.dispose()
+        return intent
     }
 
     suspend fun exchangeCodeForTokens(
@@ -89,6 +90,9 @@ object SpotifyAuthManager {
         Log.d(TAG, "Making token request to: ${tokenRequest.configuration.tokenEndpoint}")
 
         authService.performTokenRequest(tokenRequest) { response, exception ->
+            // Dispose the service connection once the request completes
+            authService.dispose()
+            
             when {
                 exception != null -> {
                     Log.e(TAG, "==================== TOKEN EXCHANGE FAILED ====================")
@@ -97,7 +101,9 @@ object SpotifyAuthManager {
                     Log.e(TAG, "Exception cause: ${exception.cause}")
                     Log.e(TAG, "Stack trace: ${exception.stackTraceToString()}")
                     Log.e(TAG, "===============================================================")
-                    continuation.resumeWithException(exception)
+                    if (continuation.isActive) {
+                        continuation.resumeWithException(exception)
+                    }
                 }
                 response != null -> {
                     Log.d(TAG, "==================== TOKEN EXCHANGE SUCCESS ====================")
@@ -124,15 +130,23 @@ object SpotifyAuthManager {
                     Log.d(TAG, "  - refreshToken length: ${tokenResponse.refreshToken.length}")
                     Log.d(TAG, "  - expiresIn: ${tokenResponse.expiresIn}")
                     
-                    continuation.resume(Result.success(tokenResponse))
+                    if (continuation.isActive) {
+                        continuation.resume(Result.success(tokenResponse))
+                    }
                 }
                 else -> {
                     Log.e(TAG, "==================== UNKNOWN ERROR ====================")
                     Log.e(TAG, "No response and no exception - unknown error")
                     Log.e(TAG, "=======================================================")
-                    continuation.resumeWithException(Exception("Unknown error occurred"))
+                    if (continuation.isActive) {
+                        continuation.resumeWithException(Exception("Unknown error occurred"))
+                    }
                 }
             }
+        }
+        
+        continuation.invokeOnCancellation {
+            authService.dispose()
         }
     }
 

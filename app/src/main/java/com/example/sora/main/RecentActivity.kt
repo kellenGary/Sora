@@ -69,6 +69,7 @@ fun LazyListScope.recentActivity(
             val activityText = when (post.activityType.uppercase()) {
                 "LIKE" -> "liked this song"
                 "LISTEN" -> "recently listened"
+                "SHARE" -> "shared this playlist"
                 else -> "did something"
             }
 
@@ -79,7 +80,12 @@ fun LazyListScope.recentActivity(
                         navController.navigate("profile?userId=${post.userId}")
                     }
                 )
-            } else {
+            } else if (activityText == "shared this playlist") {
+                SharedPlaylistPost(
+                    post = post
+                )
+            }
+            else {
                 LikedSongPost(
                     post = post,
                     onClick = {

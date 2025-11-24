@@ -165,7 +165,7 @@ fun LikedSongPost(
                 )
 
                 Text(
-                    text = post.artist,
+                    text = post.artist ?: "Unknown Artist",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
