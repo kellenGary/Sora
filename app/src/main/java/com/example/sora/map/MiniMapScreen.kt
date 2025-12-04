@@ -64,14 +64,6 @@ fun MiniMapScreen(
         }
     }
 
-    // Debug logging (same as MapScreen)
-    LaunchedEffect(songLocations) {
-        println("MiniMapScreen: songLocations count = ${songLocations.size}")
-        songLocations.forEach { song ->
-            println("Song: ${song.songTitle} at ${song.location}")
-        }
-    }
-
     // UI settings for the mini map (no controls, not scrollable)
     val uiSettings = remember {
         MapUiSettings(

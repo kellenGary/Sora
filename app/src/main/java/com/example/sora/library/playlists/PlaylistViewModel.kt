@@ -2,6 +2,7 @@ package com.example.sora.library.playlists
 
 import android.app.Application
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,7 +25,10 @@ import java.util.UUID
 data class PlaylistDetailsUiState(
     val isLoading: Boolean = false,
     val playlist: PlaylistDetailsResponse? = null,
-    val error: String? = null
+    val error: String? = null,
+    val displayedTracks: List<PlaylistTrackItem> = emptyList(),
+    val hasMoreTracks: Boolean = false,
+    val isLoadingMore: Boolean = false
 )
 
 class PlaylistViewModel(application: Application) : AndroidViewModel(application) {
@@ -32,6 +36,9 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
     var isShared by mutableStateOf(false)
         private set
 
+    private val tracksPerPage = 20
+    private var currentPage = 0
+    private var allTracks: List<PlaylistTrackItem> = emptyList()
 
     private val _uiState = MutableStateFlow(PlaylistDetailsUiState())
     val uiState: StateFlow<PlaylistDetailsUiState> = _uiState.asStateFlow()
@@ -46,7 +53,16 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
 
             try {
                 // Get valid token (auto-refreshes if expired)
-                val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication())
+                val accessToken = try {
+                    SpotifyTokenRefresher.getValidAccessToken(getApplication())
+                } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                    Log.e("PlaylistViewModel", "Refresh token revoked", e)
+                    _uiState.value = _uiState.value.copy(
+                        error = "Spotify connection expired. Please log in again.",
+                        isLoading = false
+                    )
+                    return@launch
+                }
                 if (accessToken == null) {
                     _uiState.value = _uiState.value.copy(
                         error = "Not connected to Spotify",
@@ -57,8 +73,15 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
                 
                 val playlistDetails = spotifyService.getPlaylistDetails(accessToken, playlistId)
 
+                // Store all tracks but only display first page
+                allTracks = playlistDetails.tracks.items
+                currentPage = 0
+                val initialTracks = allTracks.take(tracksPerPage)
+                
                 _uiState.value = _uiState.value.copy(
                     playlist = playlistDetails,
+                    displayedTracks = initialTracks,
+                    hasMoreTracks = allTracks.size > tracksPerPage,
                     isLoading = false,
                     error = null
                 )
@@ -69,6 +92,35 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
                     isLoading = false
                 )
             }
+        }
+    }
+
+    /**
+     * Load next page of tracks (pagination for performance)
+     */
+    fun loadMoreTracks() {
+        if (_uiState.value.isLoadingMore || !_uiState.value.hasMoreTracks) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingMore = true)
+
+            // Simulate slight delay for smooth UX (optional)
+            kotlinx.coroutines.delay(100)
+
+            currentPage++
+            val startIndex = currentPage * tracksPerPage
+            val endIndex = minOf(startIndex + tracksPerPage, allTracks.size)
+            val newTracks = allTracks.subList(startIndex, endIndex)
+
+            val updatedTracks = _uiState.value.displayedTracks + newTracks
+
+            _uiState.value = _uiState.value.copy(
+                displayedTracks = updatedTracks,
+                hasMoreTracks = endIndex < allTracks.size,
+                isLoadingMore = false
+            )
         }
     }
 

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.AuthRepository
+import com.example.sora.auth.SpotifyTokenManager
 import com.example.sora.auth.SpotifyTokenRefresher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,6 +24,9 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private val _uiState = MutableStateFlow(PlaybackUiState())
     val uiState: StateFlow<PlaybackUiState> = _uiState.asStateFlow()
     
+    private val _needsReauthentication = MutableStateFlow(false)
+    val needsReauthentication: StateFlow<Boolean> = _needsReauthentication.asStateFlow()
+    
     private var pollingJob: Job? = null
     private var progressUpdateJob: Job? = null
     
@@ -36,8 +40,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     
     /**
      * Start polling Spotify API for playback state
-     * Runs entirely in background thread with no blocking
-     * Polls every 30 seconds (reduced from 5), or on manual refresh
+     * Optimized polling: 30 seconds when idle, 5 seconds when actively playing
      */
     fun startPolling() {
         pollingJob?.cancel()
@@ -45,7 +48,13 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             while (isActive) {
                 try {
                     refreshPlaybackStateBackground()
-                    delay(5000) // Poll every 30 seconds
+                    // Dynamic polling interval based on playback state
+                    val pollInterval = if (_uiState.value.isPlaying) {
+                        5000L // Poll every 5 seconds when playing
+                    } else {
+                        30000L // Poll every 30 seconds when paused/idle (saves CPU/battery)
+                    }
+                    delay(pollInterval)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in polling loop", e)
                     delay(10000) // Wait longer on error
@@ -68,8 +77,23 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
      */
     private suspend fun refreshPlaybackStateBackground() {
         // Get valid token (auto-refreshes if expired)
-        val accessToken = withContext(Dispatchers.IO) {
-            SpotifyTokenRefresher.getValidAccessToken(getApplication())
+        val accessToken = try {
+            withContext(Dispatchers.IO) {
+                SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            }
+        } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+            Log.e(TAG, "Refresh token revoked - user needs to re-authenticate", e)
+            // Clear tokens and signal re-authentication needed
+            SpotifyTokenManager.getInstance(getApplication()).clearTokens()
+            _needsReauthentication.value = true
+            withContext(Dispatchers.Main) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Spotify connection expired. Please log in again.",
+                    isLoading = false
+                )
+            }
+            stopPolling() // Stop polling when token is revoked
+            return
         }
         
         if (accessToken == null) {
@@ -190,7 +214,21 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         // Do network call in background
         viewModelScope.launch(Dispatchers.IO) {
             // Get valid token (auto-refreshes if expired)
-            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            val accessToken = try {
+                SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                Log.e(TAG, "Refresh token revoked during toggle play/pause", e)
+                SpotifyTokenManager.getInstance(getApplication()).clearTokens()
+                _needsReauthentication.value = true
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Spotify connection expired. Please log in again.",
+                        isLoading = false,
+                        isPlaying = wasPlaying
+                    )
+                }
+                return@launch
+            }
             if (accessToken == null) {
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.copy(
@@ -256,7 +294,20 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         // Do network call in background
         viewModelScope.launch(Dispatchers.IO) {
             // Get valid token (auto-refreshes if expired)
-            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            val accessToken = try {
+                SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                Log.e(TAG, "Refresh token revoked during skip to next", e)
+                SpotifyTokenManager.getInstance(getApplication()).clearTokens()
+                _needsReauthentication.value = true
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Spotify connection expired. Please log in again.",
+                        isLoading = false
+                    )
+                }
+                return@launch
+            }
             if (accessToken == null) {
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.copy(
@@ -296,7 +347,20 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         // Do network call in background
         viewModelScope.launch(Dispatchers.IO) {
             // Get valid token (auto-refreshes if expired)
-            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            val accessToken = try {
+                SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                Log.e(TAG, "Refresh token revoked during skip to previous", e)
+                SpotifyTokenManager.getInstance(getApplication()).clearTokens()
+                _needsReauthentication.value = true
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Spotify connection expired. Please log in again.",
+                        isLoading = false
+                    )
+                }
+                return@launch
+            }
             if (accessToken == null) {
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.copy(
@@ -338,7 +402,17 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         // Do network call in background
         viewModelScope.launch(Dispatchers.IO) {
             // Get valid token (auto-refreshes if expired)
-            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            val accessToken = try {
+                SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                Log.e(TAG, "Refresh token revoked during seek", e)
+                SpotifyTokenManager.getInstance(getApplication()).clearTokens()
+                _needsReauthentication.value = true
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(error = "Spotify connection expired. Please log in again.")
+                }
+                return@launch
+            }
             if (accessToken == null) {
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.copy(error = "Not connected to Spotify")
@@ -372,7 +446,20 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         _uiState.value = _uiState.value.copy(shuffleState = newState)
         
         viewModelScope.launch(Dispatchers.IO) {
-            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication()) ?: return@launch
+            val accessToken = try {
+                SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                Log.e(TAG, "Refresh token revoked during toggle shuffle", e)
+                SpotifyTokenManager.getInstance(getApplication()).clearTokens()
+                _needsReauthentication.value = true
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        shuffleState = currentState,
+                        error = "Spotify connection expired. Please log in again."
+                    )
+                }
+                return@launch
+            } ?: return@launch
             val result = SpotifyPlaybackManager.setShuffle(accessToken, newState)
             
             result.onSuccess {
@@ -402,7 +489,20 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         _uiState.value = _uiState.value.copy(repeatState = newMode)
         
         viewModelScope.launch(Dispatchers.IO) {
-            val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication()) ?: return@launch
+            val accessToken = try {
+                SpotifyTokenRefresher.getValidAccessToken(getApplication())
+            } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                Log.e(TAG, "Refresh token revoked during cycle repeat", e)
+                SpotifyTokenManager.getInstance(getApplication()).clearTokens()
+                _needsReauthentication.value = true
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        repeatState = currentMode,
+                        error = "Spotify connection expired. Please log in again."
+                    )
+                }
+                return@launch
+            } ?: return@launch
             val result = SpotifyPlaybackManager.setRepeat(accessToken, newMode)
             
             result.onSuccess {
@@ -424,6 +524,13 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun refresh() {
         _uiState.value = _uiState.value.copy(isLoading = true)
         refreshPlaybackState()
+    }
+    
+    /**
+     * Clear the reauthentication flag (called after handling)
+     */
+    fun clearReauthenticationFlag() {
+        _needsReauthentication.value = false
     }
     
     override fun onCleared() {

@@ -1,6 +1,7 @@
 package com.example.sora.library.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sora.auth.SpotifyTokenRefresher
@@ -35,7 +36,16 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
             try {
                 // Get valid token (auto-refreshes if expired)
-                val accessToken = SpotifyTokenRefresher.getValidAccessToken(getApplication())
+                val accessToken = try {
+                    SpotifyTokenRefresher.getValidAccessToken(getApplication())
+                } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+                    Log.e("LibraryViewModel", "Refresh token revoked", e)
+                    _uiState.value = _uiState.value.copy(
+                        error = "Spotify connection expired. Please log in again.",
+                        isLoading = false
+                    )
+                    return@launch
+                }
                 if (accessToken == null) {
                     _uiState.value = _uiState.value.copy(
                         error = "Not connected to Spotify",
