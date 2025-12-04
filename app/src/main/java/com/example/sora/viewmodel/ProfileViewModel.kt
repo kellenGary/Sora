@@ -73,55 +73,60 @@ class ProfileViewModel: ViewModel(), IProfileViewModel {
 
     override fun loadProfile(userId: String?) {
         viewModelScope.launch {
-            val currentUserId = authRepository.getCurrentUser()?.id
-            val idToLoad = userId ?: authRepository.getCurrentUser()?.id
+            try {
+                val currentUserId = authRepository.getCurrentUser()?.id
+                val idToLoad = userId ?: authRepository.getCurrentUser()?.id
 
-            if (idToLoad == null || currentUserId == null) {
-                Log.e(TAG, "No userId available to load profile or not logged in")
-                return@launch
-            }
+                if (idToLoad == null || currentUserId == null) {
+                    Log.e(TAG, "No userId available to load profile or not logged in")
+                    return@launch
+                }
 
-            val profile = userRepository.getUser(idToLoad)
+                val profile = userRepository.getUser(idToLoad)
 
-            val likedSongsRaw = likedSongsRepository.getLikedSongs(idToLoad)
-            val personalLikedSongs = likedSongsRepository.getLikedSongs(currentUserId)
-            val likedSongIdsSet = personalLikedSongs.map { it.id }.toSet()
+                val likedSongsRaw = likedSongsRepository.getLikedSongs(idToLoad)
+                val personalLikedSongs = likedSongsRepository.getLikedSongs(currentUserId)
+                val likedSongIdsSet = personalLikedSongs.map { it.id }.toSet()
 
-            val likedSongsUi = likedSongsRaw.map { song ->
-                song.copy(isLiked = likedSongIdsSet.contains(song.id))
-            }
+                val likedSongsUi = likedSongsRaw.map { song ->
+                    song.copy(isLiked = likedSongIdsSet.contains(song.id))
+                }
 
-            val fullHistory = userStatsRepository.getFullListeningHistory(
-                userId = idToLoad,
-                limit = 10
-            )
-
-            val historyUiSongs = fullHistory.map { row ->
-                SongUi(
-                    id = row.song_id,
-                    title = row.song_title,
-                    artist = row.artist_name,
-                    albumArtUrl = row.album_cover,
-                    isLiked = likedSongIdsSet.contains(row.song_id)
+                val fullHistory = userStatsRepository.getFullListeningHistory(
+                    userId = idToLoad,
+                    limit = 10
                 )
+
+                val historyUiSongs = fullHistory.map { row ->
+                    SongUi(
+                        id = row.song_id,
+                        title = row.song_title,
+                        artist = row.artist_name,
+                        albumArtUrl = row.album_cover,
+                        isLiked = likedSongIdsSet.contains(row.song_id)
+                    )
+                }
+
+                val uniqueSongs = userStatsRepository.getUniqueSongCount(idToLoad)
+
+                val isFollowed = if (currentUserId != idToLoad) {
+                    followRepository.isFollowing(idToLoad)
+                } else false
+
+                _uiState.value = _uiState.value.copy(
+                    displayName = profile?.displayName ?: "User",
+                    avatarUrl = profile?.avatarUrl,
+                    listeningHistory = historyUiSongs,
+                    likedSongs = likedSongsUi,
+                    uniqueSongs = uniqueSongs,
+                    isPersonalProfile = (currentUserId == idToLoad),
+                    isFollowed = isFollowed,
+                )
+                Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load profile: ${e.message}")
+                // Optionally update UI state to show an error or keep previous state.
             }
-
-            val uniqueSongs = userStatsRepository.getUniqueSongCount(idToLoad)
-
-            val isFollowed = if (currentUserId != idToLoad) {
-                followRepository.isFollowing(idToLoad)
-            } else false
-
-            _uiState.value = _uiState.value.copy(
-                displayName = profile?.displayName ?: "User",
-                avatarUrl = profile?.avatarUrl,
-                listeningHistory = historyUiSongs,
-                likedSongs = likedSongsUi,
-                uniqueSongs = uniqueSongs,
-                isPersonalProfile = (currentUserId == idToLoad),
-                isFollowed = isFollowed,
-            )
-            Log.d(TAG, "Loaded profile for $idToLoad: ${profile?.displayName}")
         }
     }
 

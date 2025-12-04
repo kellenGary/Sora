@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -16,6 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.sora.feed.FeedViewModel
 import com.example.sora.map.MiniMapScreen
+import com.example.sora.ui.NoConnectionScreen
+import com.example.sora.utils.NetworkConnectivityManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,8 +26,28 @@ fun MainScreen(
     navController: NavController,
     feedViewModel: FeedViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val connectivityManager = remember { NetworkConnectivityManager(context) }
+    val isConnected by connectivityManager.isConnected.collectAsState()
+
+    DisposableEffect(connectivityManager) {
+        onDispose {
+            connectivityManager.unregister()
+        }
+    }
+
+    if (!isConnected) {
+        NoConnectionScreen(
+            onRetry = { 
+                feedViewModel.refreshFeed()
+            }
+        )
+        return
+    }
+
     DisposableEffect(Unit) {
         Log.d("Home", "onCreateView called")
+        feedViewModel.ensureLoaded()
         feedViewModel.startPollingActiveFriends()
         onDispose {
             Log.d("Home", "onDestroyView called")

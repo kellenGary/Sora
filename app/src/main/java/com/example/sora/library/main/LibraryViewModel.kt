@@ -23,12 +23,17 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
-    init {
+    fun ensureLoaded() {
         if (!hasLoaded) {
             hasLoaded = true
             getAllPlaylists()
         }
     }
+
+    fun refreshLibrary() {
+        getAllPlaylists()
+    }
+
     fun getAllPlaylists() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)

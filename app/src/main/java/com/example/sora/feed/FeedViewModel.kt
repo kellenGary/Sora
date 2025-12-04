@@ -34,11 +34,14 @@ class FeedViewModel : ViewModel() {
     val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
     
     private var pollingJob: kotlinx.coroutines.Job? = null
+    private var hasInitialized = false
 
-    init {
-        loadFeed()
-        // Initial load
-        loadActiveFriends()
+    fun ensureLoaded() {
+        if (!hasInitialized) {
+            hasInitialized = true
+            loadFeed()
+            loadActiveFriends()
+        }
     }
     
     fun startPollingActiveFriends() {

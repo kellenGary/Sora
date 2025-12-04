@@ -12,14 +12,18 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.sora.ui.NoConnectionScreen
+import com.example.sora.utils.NetworkConnectivityManager
 
 private const val TAG = "LibraryScreen"
 
@@ -35,6 +41,26 @@ fun LibraryScreen(
     navController: NavController? = null,
     libraryViewModel: LibraryViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val connectivityManager = remember { NetworkConnectivityManager(context) }
+    val isConnected by connectivityManager.isConnected.collectAsState()
+
+    DisposableEffect(connectivityManager) {
+        onDispose {
+            connectivityManager.unregister()
+        }
+    }
+
+    if (!isConnected) {
+        NoConnectionScreen(
+            onRetry = {
+                // Trigger a refresh of the library
+                libraryViewModel.refreshLibrary()
+            }
+        )
+        return
+    }
+
     val uiState by libraryViewModel.uiState.collectAsState()
 
 
@@ -84,7 +110,12 @@ fun LibraryScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        libraryViewModel.ensureLoaded()
+    }
 }
+    
+
 
 @Composable
 fun PlaylistItem(playlist: PlaylistItem, modifier: Modifier = Modifier) {
