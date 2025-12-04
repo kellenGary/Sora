@@ -14,6 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.sora.ui.NoConnectionScreen
+import com.example.sora.utils.NetworkConnectivityManager
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
 
@@ -23,6 +25,24 @@ fun MapScreen(
     mapViewModel: MapViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val connectivityManager = remember { NetworkConnectivityManager(context) }
+    val isConnected by connectivityManager.isConnected.collectAsState()
+
+    DisposableEffect(connectivityManager) {
+        onDispose {
+            connectivityManager.unregister()
+        }
+    }
+
+    if (!isConnected) {
+        NoConnectionScreen(
+            onRetry = {
+                mapViewModel.refreshSongLocations()
+            }
+        )
+        return
+    }
+
     val locationState by mapViewModel.locationState.collectAsState()
     val songLocations by mapViewModel.songLocations.collectAsState()
     var selectedSongs by remember { mutableStateOf<List<SongLocation>>(emptyList()) }

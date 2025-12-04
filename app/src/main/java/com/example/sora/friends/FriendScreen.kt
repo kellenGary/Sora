@@ -15,18 +15,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.sora.ui.NoConnectionScreen
+import com.example.sora.utils.NetworkConnectivityManager
 import com.example.sora.viewmodel.IFriendsViewModel
 import com.example.sora.viewmodel.UserUi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,11 +42,35 @@ fun FriendScreen(
     navController: NavController,
     viewModel: IFriendsViewModel,
 ) {
+    val context = LocalContext.current
+    val connectivityManager = remember { NetworkConnectivityManager(context) }
+    val isConnected by connectivityManager.isConnected.collectAsState()
+
+    DisposableEffect(connectivityManager) {
+        onDispose {
+            connectivityManager.unregister()
+        }
+    }
+
+    if (!isConnected) {
+        NoConnectionScreen(
+            onRetry = {
+                // Force refresh the friends list
+                viewModel.updateSearchQuery("")
+            }
+        )
+        return
+    }
+
     val users by viewModel.filteredUsers.collectAsState(initial = emptyList())
     val searchQuery by viewModel.searchQuery.collectAsState()
 
     // Track selected tab
     var selectedTab by remember { mutableStateOf(0) } // 0 = All Users, 1 = Following
+    
+    LaunchedEffect(Unit) {
+        viewModel.ensureLoaded()
+    }
 
     Column(
         modifier = Modifier
@@ -112,6 +141,7 @@ fun FriendScreen(
     }
 }
 
+
 @Composable
 fun TabButton(text: String, selected: Boolean, onClick: () -> Unit) {
     Text(
@@ -155,6 +185,7 @@ fun FriendScreenPreview() {
 
         override fun follow(userId: String) { /* no-op for preview */ }
         override fun unfollow(userId: String) { /* no-op for preview */ }
+        override fun ensureLoaded() { /* no-op for preview */ }
     }
 
     FriendScreen(

@@ -46,8 +46,10 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asComposeRenderEffect
+import com.example.sora.utils.NetworkConnectivityManager
 
 data class SongUi(
     val id: String,
@@ -68,14 +70,31 @@ fun ProfileScreen(
     userId: String?,
     profileViewModel: IProfileViewModel,
 ) {
+    val context = LocalContext.current
+    val connectivityManager = remember { NetworkConnectivityManager(context) }
+    val isConnected by connectivityManager.isConnected.collectAsState()
+
+    DisposableEffect(connectivityManager) {
+        onDispose {
+            connectivityManager.unregister()
+        }
+    }
+
+    if (!isConnected) {
+        NoConnectionScreen(
+            onRetry = {
+                profileViewModel.loadProfile(userId)
+            }
+        )
+        return
+    }
+
     val uiState by profileViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         profileViewModel.loadProfile(userId)
         Log.d(TAG, "ProfileScreen Composed for user: ${uiState.displayName}")
     }
-
-    val context = LocalContext.current
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),

@@ -9,4 +9,5 @@ interface IFriendsViewModel {
     fun updateSearchQuery(newValue: String)
     fun follow(userId: String)
     fun unfollow(userId: String)
+    fun ensureLoaded()
 }

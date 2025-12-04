@@ -41,8 +41,13 @@ class FriendsViewModel(
         emptyList()
     )
 
-    init {
-        loadUsers()
+    private var hasInitialized = false
+
+    override fun ensureLoaded() {
+        if (!hasInitialized) {
+            hasInitialized = true
+            loadUsers()
+        }
     }
 
     fun loadUsers() {

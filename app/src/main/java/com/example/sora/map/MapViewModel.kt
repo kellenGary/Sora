@@ -139,6 +139,10 @@ class MapViewModel : ViewModel() {
         fetchFriendsListeningHistory()
     }
 
+    fun refreshSongLocations() {
+        fetchFriendsListeningHistory()
+    }
+
     override fun onCleared() {
         super.onCleared()
         stopLocationUpdates()
