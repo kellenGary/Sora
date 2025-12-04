@@ -144,6 +144,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // Handle token revocation - redirect to login if refresh token was revoked
+            LaunchedEffect(playbackViewModel.needsReauthentication) {
+                playbackViewModel.needsReauthentication.collect { needsReauth ->
+                    if (needsReauth) {
+                        Log.w(TAG, "Refresh token revoked - signing out and redirecting to login")
+                        
+                        // Clear tokens and sign out
+                        val tokenManager = SpotifyTokenManager.getInstance(this@MainActivity)
+                        tokenManager.clearTokens()
+                        authViewModel.signOut()
+                        authViewModel.setErrorMessage("Your Spotify connection has expired. Please log in again.")
+                        
+                        // Navigate to login
+                        navController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                        
+                        // Clear the flag
+                        playbackViewModel.clearReauthenticationFlag()
+                    }
+                }
+            }
+            
             // Start song tracking service when user is logged in and Spotify is connected
             LaunchedEffect(authViewModel.uiState.value.isLoggedIn, authViewModel.uiState.value.isSpotifyConnected) {
                 if (authViewModel.uiState.value.isLoggedIn && authViewModel.uiState.value.isSpotifyConnected) {
@@ -248,7 +271,8 @@ class MainActivity : ComponentActivity() {
                                 currentRoute.startsWith("friends") ||
                                 currentRoute.startsWith("settings") ||
                                 currentRoute.startsWith("profile") ||
-                                currentRoute.startsWith("library")
+                                currentRoute.startsWith("library") ||
+                                currentRoute.startsWith("playlist")
                         )) {
                 Column(
                     modifier = Modifier

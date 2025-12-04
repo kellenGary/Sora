@@ -30,7 +30,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,7 +54,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.sora.R
-import com.example.sora.ui.BottomNavBar
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -66,43 +64,112 @@ fun PlaylistScreen (
     playlistId: String?
 ) {
     val uiState by playlistViewModel.uiState.collectAsState()
+    
     LaunchedEffect(playlistId) {
         playlistViewModel.loadPlaylistDetails(playlistId)
     }
-    val playlist = uiState.playlist
-    Scaffold(
-        bottomBar = {BottomNavBar(navController)}
-    ) { innerPadding ->
-        LazyColumn(
-            contentPadding = innerPadding,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-
-        ) {
-            // --- Playlist header ---
-            item {
-                PlaylistHeader(playlist)
+    
+    // Add padding for the bottom nav bar and mini player
+    val bottomPadding = 160.dp
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            uiState.isLoading -> {
+                // Show loading indicator
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Loading playlist...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                }
             }
-            item {
-                ShareStatusButton(
-                    isShared = playlistViewModel.isShared, // Observe the ViewModel state
-                    onClick = {
-                            playlistViewModel.sharePlaylistToFeed(
-                            playlistId = playlistId,
-                            name = playlist?.name ?: "Unknown",
-                            imageUrl = playlist?.images?.firstOrNull()?.url ?: "",
-                            owner = playlist?.owner?.display_name ?: "Unknown"
+            uiState.error != null -> {
+                // Show error message
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Error loading playlist",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Red
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = uiState.error ?: "Unknown error",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.7f)
                         )
                     }
-                )
+                }
             }
+            uiState.playlist != null -> {
+                // Show playlist content
+                val playlist = uiState.playlist!!
+                LazyColumn(
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = bottomPadding),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                ) {
+                    // --- Playlist header ---
+                    item {
+                        PlaylistHeader(playlist)
+                    }
+                    item {
+                        ShareStatusButton(
+                            isShared = playlistViewModel.isShared,
+                            onClick = {
+                                val ownerName = playlist.owner.display_name ?: "Unknown"
+                                val imageUrl = playlist.images.firstOrNull()?.url ?: ""
+                                playlistViewModel.sharePlaylistToFeed(
+                                    playlistId = playlistId,
+                                    name = playlist.name,
+                                    imageUrl = imageUrl,
+                                    owner = ownerName
+                                )
+                            }
+                        )
+                    }
 
-
-            // --- Songs list ---
-            playlist?.tracks?.total?.let {
-                items(it) { trackItem ->
-                    SongRow(playlist.tracks.items[trackItem].track, navController)
+                    // --- Songs list (Paginated for performance) ---
+                    val tracks = uiState.displayedTracks
+                    items(
+                        count = tracks.size,
+                        key = { index -> "track_item_$index" }
+                    ) { index ->
+                        SongRow(tracks[index].track, navController)
+                        
+                        // Load more when approaching end (pagination trigger)
+                        if (index >= tracks.size - 5 && uiState.hasMoreTracks && !uiState.isLoadingMore) {
+                            LaunchedEffect(Unit) {
+                                playlistViewModel.loadMoreTracks()
+                            }
+                        }
+                    }
+                    
+                    // Loading indicator for pagination
+                    if (uiState.isLoadingMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Loading more tracks...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -110,21 +177,23 @@ fun PlaylistScreen (
 }
 
 @Composable
-fun PlaylistHeader(playlist: PlaylistDetailsResponse?) {
+fun PlaylistHeader(playlist: PlaylistDetailsResponse) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(350.dp) // Give it height!
+            .height(350.dp)
     ) {
         // 1. The Atmospheric Background
         AsyncImage(
-            model = playlist?.images?.firstOrNull()?.url,
+            model = playlist.images.firstOrNull()?.url,
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+            error = painterResource(id = R.drawable.ic_launcher_foreground),
             modifier = Modifier
                 .fillMaxSize()
-                .blur(radius = 50.dp) // Requires Android 12+, or use a library/scrim
-                .alpha(0.6f) // Fade it out so it's not too distracting
+                .blur(radius = 50.dp)
+                .alpha(0.6f)
         )
 
         // Gradient overlay to blend into the black list below
@@ -152,40 +221,39 @@ fun PlaylistHeader(playlist: PlaylistDetailsResponse?) {
                 modifier = Modifier.size(160.dp)
             ) {
                 AsyncImage(
-                    model = playlist?.images?.firstOrNull()?.url,
+                    model = playlist.images.firstOrNull()?.url,
                     contentDescription = null,
+                    placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                    error = painterResource(id = R.drawable.ic_launcher_foreground),
                     modifier = Modifier.fillMaxSize()
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Title and Emoji
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                playlist?.name?.let {
-                    Text(
-                        text = it, // Replace with variable
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-            }
+            // Title
+            Text(
+                text = playlist.name,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Created by ${playlist?.owner?.display_name}",
+                text = "Created by ${playlist.owner.display_name}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-
-            Text(
-                text = "${playlist?.description}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.7f)
-            )
+            playlist.description?.let { description ->
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
         }
     }
 }
@@ -195,15 +263,17 @@ fun SongRow(song: Track, navController: NavController) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { /* Play song */ }
-            .padding(vertical = 8.dp, horizontal = 16.dp), // Give it breathing room
+            .padding(vertical = 8.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Song Image
         AsyncImage(
             model = song.album.images?.firstOrNull()?.url,
+            placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+            error = painterResource(id = R.drawable.ic_launcher_foreground),
             modifier = Modifier
                 .size(56.dp)
-                .clip(RoundedCornerShape(8.dp)), // Soft corners look modern
+                .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop,
             contentDescription = null
         )

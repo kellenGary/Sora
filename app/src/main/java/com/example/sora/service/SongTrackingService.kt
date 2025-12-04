@@ -31,6 +31,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SongTrackingService : Service() {
     private val TAG = "SongTrackingService"
@@ -230,7 +231,16 @@ class SongTrackingService : Service() {
 
     private suspend fun checkAndTrackCurrentSong(): Boolean {
         // Get valid access token (refreshes if needed)
-        val accessToken = SpotifyTokenRefresher.getValidAccessToken(this)
+        val accessToken = try {
+            SpotifyTokenRefresher.getValidAccessToken(this)
+        } catch (e: SpotifyTokenRefresher.RefreshTokenRevokedException) {
+            Log.e(TAG, "Refresh token revoked - stopping service", e)
+            // Stop the service since we can't continue without valid tokens
+            withContext(Dispatchers.Main) {
+                stopSelf()
+            }
+            return false
+        }
         if (accessToken == null) {
             Log.w(TAG, "No valid Spotify access token available yet, will retry soon")
             updateNotification("Initializing Spotify connection...")

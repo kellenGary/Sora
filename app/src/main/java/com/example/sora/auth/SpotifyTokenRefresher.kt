@@ -130,6 +130,10 @@ object SpotifyTokenRefresher {
                 return tokenResponse.accessToken
             }.onFailure { exception ->
                 Log.e(TAG, "Failed to refresh token", exception)
+                // Throw the exception if it's a RefreshTokenRevokedException
+                if (exception is RefreshTokenRevokedException) {
+                    throw exception
+                }
                 return null
             }
         }

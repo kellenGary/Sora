@@ -44,8 +44,8 @@ object SpotifyAuthManager {
         "user-read-currently-playing"
     )
     
-    // Store the last authorization request to retrieve the code_verifier
-    private var lastAuthRequest: AuthorizationRequest? = null
+    // Store pending authorization requests mapped by state
+    private val pendingRequests = mutableMapOf<String, AuthorizationRequest>()
 
     fun getAuthorizationRequestIntent(context: Context): Intent {
         Log.d(TAG, "Creating authorization request")
@@ -63,8 +63,10 @@ object SpotifyAuthManager {
         val authRequest = request.build()
         
         // Store the request so we can use it later for token exchange
-        lastAuthRequest = authRequest
-        Log.d(TAG, "Stored authorization request for later use")
+        if (authRequest.state != null) {
+            pendingRequests[authRequest.state!!] = authRequest
+            Log.d(TAG, "Stored authorization request with state: ${authRequest.state}")
+        }
         Log.d(TAG, "Code verifier present: ${authRequest.codeVerifier != null}")
         
         val authService = AuthorizationService(context)
@@ -178,24 +180,32 @@ object SpotifyAuthManager {
                 Log.d(TAG, "Manual parsing - Code: ${code?.take(20)}...")
                 Log.d(TAG, "Manual parsing - State: $state")
                 
+                val matchingRequest = if (state != null) pendingRequests[state] else null
+
                 when {
-                    code != null && lastAuthRequest != null -> {
+                    code != null && matchingRequest != null -> {
                         Log.d(TAG, "Creating AuthorizationResponse manually using stored request...")
-                        Log.d(TAG, "Stored request has code_verifier: ${lastAuthRequest!!.codeVerifier != null}")
+                        Log.d(TAG, "Stored request has code_verifier: ${matchingRequest.codeVerifier != null}")
                         
                         // Build the response using the original authorization request
                         // This preserves the code_verifier for PKCE
-                        response = AuthorizationResponse.Builder(lastAuthRequest!!)
+                        response = AuthorizationResponse.Builder(matchingRequest)
                             .setAuthorizationCode(code)
-                            .setState(state ?: lastAuthRequest!!.state)
+                            .setState(state ?: matchingRequest.state)
                             .build()
+                        
+                        // Clean up the used request
+                        if (state != null) {
+                            pendingRequests.remove(state)
+                        }
                         
                         Log.d(TAG, "Manually created AuthorizationResponse successfully")
                         Log.d(TAG, "Response has code_verifier: ${response.request.codeVerifier != null}")
                     }
-                    code != null && lastAuthRequest == null -> {
-                        Log.e(TAG, "Cannot create response: lastAuthRequest is null")
-                        Log.e(TAG, "This means the app was restarted between authorization and callback")
+                    code != null && matchingRequest == null -> {
+                        Log.e(TAG, "Cannot create response: No matching request found for state $state")
+                        Log.e(TAG, "Pending requests keys: ${pendingRequests.keys}")
+                        Log.e(TAG, "This means the app was restarted or the request was lost")
                     }
                     else -> {
                         Log.e(TAG, "No authorization code found in URI")
