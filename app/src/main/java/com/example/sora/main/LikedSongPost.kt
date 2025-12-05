@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.sora.data.model.FeedActivity
+import com.example.sora.utils.ProfilePictureFallback
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -124,19 +124,7 @@ fun LikedSongPost(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = (post.userName?.firstOrNull()?.uppercase() ?: "?"),
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        ProfilePictureFallback(post.userName)
                     }
 
                     Column {

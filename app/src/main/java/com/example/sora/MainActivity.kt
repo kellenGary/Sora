@@ -257,7 +257,8 @@ class MainActivity : ComponentActivity() {
                         ProfileScreen(
                             navController = navController,
                             userId = userIdArg,
-                            profileViewModel = profileViewModel
+                            profileViewModel = profileViewModel,
+                            authViewModel = authViewModel
                         )
                     }
                 }

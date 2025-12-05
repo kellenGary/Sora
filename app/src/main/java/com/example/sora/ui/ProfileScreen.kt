@@ -50,6 +50,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import com.example.sora.utils.NetworkConnectivityManager
+import com.example.sora.utils.ProfilePictureFallback
+import com.example.sora.auth.IAuthViewModel
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 
 data class SongUi(
     val id: String,
@@ -69,6 +73,7 @@ fun ProfileScreen(
     navController: NavController,
     userId: String?,
     profileViewModel: IProfileViewModel,
+    authViewModel: IAuthViewModel? = null
 ) {
     val context = LocalContext.current
     val connectivityManager = remember { NetworkConnectivityManager(context) }
@@ -77,6 +82,16 @@ fun ProfileScreen(
     DisposableEffect(connectivityManager) {
         onDispose {
             connectivityManager.unregister()
+        }
+    }
+
+    // Navigate to login when user signs out
+    val authUiState by (authViewModel?.uiState ?: kotlinx.coroutines.flow.MutableStateFlow(com.example.sora.auth.AuthUiState())).collectAsState()
+    LaunchedEffect(authUiState.isLoggedIn) {
+        if (!authUiState.isLoggedIn && authViewModel != null) {
+            navController.navigate("login") {
+                popUpTo(0) { inclusive = true }
+            }
         }
     }
 
@@ -138,7 +153,9 @@ fun ProfileScreen(
                     if (uiState.isFollowed) profileViewModel.unfollow(userId!!)
                     else profileViewModel.follow(userId!!)
                 },
-                navController = navController
+                onSignOut = {
+                    authViewModel?.signOut()
+                }
             )
         }
 
@@ -174,7 +191,7 @@ fun ProfileHeader(
     isPersonalProfile: Boolean,
     isFollowed: Boolean,
     handleFollowClick: () -> Unit,
-    navController: NavController
+    onSignOut: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -183,18 +200,28 @@ fun ProfileHeader(
                 .padding(bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = pfpUrl,
-                contentDescription = "Profile Picture",
-                placeholder = ColorPainter(Color(0xFFD9D9D9)),
-                error = ColorPainter(Color(0xFFD9D9D9)),
-                contentScale = ContentScale.Crop,
+            // Profile picture with fallback
+            Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
                     .background(Color.LightGray)
-                    .then(modifier)
-            )
+                    .then(modifier),
+                contentAlignment = Alignment.Center
+            ) {
+                if (pfpUrl != null) {
+                    AsyncImage(
+                        model = pfpUrl,
+                        contentDescription = "Profile Picture",
+                        placeholder = ColorPainter(Color(0xFFD9D9D9)),
+                        error = ColorPainter(Color(0xFFD9D9D9)),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    ProfilePictureFallback(username)
+                }
+            }
 
             // Spacer between image and text
             Spacer(modifier = Modifier.width(10.dp))
@@ -243,13 +270,17 @@ fun ProfileHeader(
             }
         }
         if (isPersonalProfile) {
-            IconButton(
-                onClick = { navController.navigate("settings") },
-                modifier = Modifier.align(Alignment.TopEnd)
+            Button(
+                onClick = onSignOut,
+                modifier = Modifier.align(Alignment.TopEnd),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF282828)
+                )
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_settings_24),
-                    contentDescription = "Settings"
+                Text(
+                    text = "Sign Out",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.W600
                 )
             }
         }
@@ -481,6 +512,7 @@ fun ProfileScreenPreview() {
     ProfileScreen(
         navController = rememberNavController(),
         userId = "",
-        profileViewModel = fakeViewModel
+        profileViewModel = fakeViewModel,
+        authViewModel = null
     )
 }

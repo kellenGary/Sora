@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.sora.data.model.FeedActivity
+import com.example.sora.utils.ProfilePictureFallback
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -128,20 +129,7 @@ fun RecentlyListenedPost(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = (post.userName?.firstOrNull()?.uppercase() ?: "?"),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        ProfilePictureFallback(post.userName)
                     }
                     
                     Column(

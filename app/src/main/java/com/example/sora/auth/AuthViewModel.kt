@@ -160,9 +160,27 @@ class AuthViewModel(application: android.app.Application) : androidx.lifecycle.A
             // Set user inactive before signing out
             UserRepository().updateUserActiveStatus(false)
             
+            // Clear Spotify tokens
+            val tokenManager = SpotifyTokenManager.getInstance(getApplication())
+            tokenManager.clearTokens()
+            
             authRepository.signOut()
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(isLoggedIn = false)
+                    _uiState.value = _uiState.value.copy(
+                        isLoggedIn = false,
+                        isSpotifyConnected = false,
+                        spotifyAuthData = null
+                    )
+                    Log.d(TAG, "Successfully signed out - cleared all tokens and state")
+                }
+                .onFailure { exception ->
+                    Log.e(TAG, "Sign out failed", exception)
+                    // Even if sign out fails, clear local state
+                    _uiState.value = _uiState.value.copy(
+                        isLoggedIn = false,
+                        isSpotifyConnected = false,
+                        spotifyAuthData = null
+                    )
                 }
         }
     }
